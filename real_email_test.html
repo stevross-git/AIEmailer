@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real Email Send Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 700px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #007bff; text-align: center; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: #333;
+        }
+        input, textarea, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea { height: 120px; resize: vertical; }
+        button { 
+            background: #007bff; 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .result { 
+            margin-top: 25px; 
+            padding: 15px; 
+            border-radius: 4px; 
+            font-weight: bold;
+        }
+        .success { 
+            background: #d4edda; 
+            border: 1px solid #c3e6cb; 
+            color: #155724; 
+        }
+        .error { 
+            background: #f8d7da; 
+            border: 1px solid #f5c6cb; 
+            color: #721c24; 
+        }
+        .info {
+            background: #e7f3ff;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Real Email Send Test</h1>
+        
+        <div class="info">
+            <strong>📨 Microsoft 365 Email Sending</strong><br>
+            This will send a real email through your Microsoft 365 account using Microsoft Graph API.
+            Make sure you're signed in with your Microsoft account.
+        </div>
+        
+        <form id="emailForm">
+            <div class="form-group">
+                <label for="to">📥 To (Recipient):</label>
+                <input type="email" id="to" name="to" required 
+                       placeholder="recipient@example.com"
+                       title="Enter the recipient's email address">
+            </div>
+            
+            <div class="form-group">
+                <label for="cc">📄 CC (Optional):</label>
+                <input type="email" id="cc" name="cc" 
+                       placeholder="cc@example.com (optional)"
+                       title="Carbon copy recipients">
+            </div>
+            
+            <div class="form-group">
+                <label for="bcc">🔒 BCC (Optional):</label>
+                <input type="email" id="bcc" name="bcc" 
+                       placeholder="bcc@example.com (optional)"
+                       title="Blind carbon copy recipients">
+            </div>
+            
+            <div class="form-group">
+                <label for="importance">⭐ Importance:</label>
+                <select id="importance" name="importance">
+                    <option value="low">Low</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="subject">📝 Subject:</label>
+                <input type="text" id="subject" name="subject" required 
+                       placeholder="Email Subject"
+                       title="Enter the email subject">
+            </div>
+            
+            <div class="form-group">
+                <label for="body">✉️ Message:</label>
+                <textarea id="body" name="body" required 
+                          placeholder="Type your email message here..."
+                          title="Enter the email content"></textarea>
+            </div>
+            
+            <button type="submit" id="sendBtn">
+                🚀 Send Real Email via Microsoft 365
+            </button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('emailForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const sendBtn = document.getElementById('sendBtn');
+            const resultDiv = document.getElementById('result');
+            
+            // Disable button and show loading
+            sendBtn.disabled = true;
+            sendBtn.textContent = '📤 Sending Email...';
+            resultDiv.innerHTML = '<div class="result loading">📡 Sending email via Microsoft Graph API...</div>';
+            
+            const formData = new FormData(this);
+            const data = {
+                to: formData.get('to'),
+                cc: formData.get('cc') || null,
+                bcc: formData.get('bcc') || null,
+                subject: formData.get('subject'),
+                body: formData.get('body'),
+                importance: formData.get('importance')
+            };
+            
+            // Remove null/empty values
+            Object.keys(data).forEach(key => {
+                if (!data[key]) delete data[key];
+            });
+            
+            fetch('/api/email/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ <strong>Email Sent Successfully!</strong><br>
+                            📧 To: ${data.details.to}<br>
+                            📝 Subject: "${data.details.subject}"<br>
+                            ⏰ Sent at: ${new Date(data.details.sent_at).toLocaleString()}<br>
+                            📨 From: ${data.details.from}
+                        </div>
+                    `;
+                    
+                    // Clear form on success
+                    document.getElementById('emailForm').reset();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            ❌ <strong>Email Send Failed</strong><br>
+                            Error: ${data.error}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ <strong>Network Error</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            })
+            .finally(() => {
+                // Re-enable button
+                sendBtn.disabled = false;
+                sendBtn.textContent = '🚀 Send Real Email via Microsoft 365';
+            });
+        });
+        
+        // Auto-focus first field
+        document.getElementById('to').focus();
+    </script>
+</body>
+</html>

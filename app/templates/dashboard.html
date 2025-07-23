@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Email Assistant{% endblock %}
+
+{% block content %}
+        <!-- Current User Info -->
+        <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert">
+            <span>
+                <strong>Current User:</strong> {{ user.email if user else 'Unknown' }}
+                {% if user and user.azure_id == 'demo-user-123' %}
+                    <span class="badge bg-warning">Demo Mode</span>
+                {% else %}
+                    <span class="badge bg-success">Microsoft 365</span>
+                {% endif %}
+            </span>
+            <div>
+                <a href="/auth/logout" class="btn btn-outline-secondary btn-sm me-2">Logout</a>
+                {% if user and user.azure_id == 'demo-user-123' %}
+                    <a href="/auth/microsoft" class="btn btn-primary btn-sm">Sign in with Microsoft</a>
+                {% endif %}
+            </div>
+        </div>
+
+<div class="container-fluid py-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">Welcome back, {{ user.display_name }}!</h1>
+                    <p class="text-muted mb-0">Here's what's happening with your emails</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" id="syncEmailsBtn">
+                        <i class="bi bi-arrow-clockwise"></i> Sync Emails
+                    </button>
+                    <a href="{{ url_for('main.chat') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-chat-dots"></i> AI Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Emails
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalEmails">
+                                {{ stats.total_emails }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-envelope fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Unread Emails
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="unreadEmails">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-envelope-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                This Week
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="weeklyEmails">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-week fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Last Sync
+                            </div>
+                            <div class="small mb-0 font-weight-bold text-gray-800" id="lastSync">
+                                {{ stats.last_sync }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row">
+        <!-- Recent Emails -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Emails</h6>
+                    <a href="{{ url_for('main.emails') }}" class="btn btn-sm btn-outline-primary">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="recentEmailsList">
+                        {% if stats.recent_emails %}
+                            {% for email in stats.recent_emails %}
+                            <div class="email-item d-flex align-items-center p-2 border-bottom">
+                                <div class="flex-shrink-0">
+                                    <div class="avatar bg-{{ 'primary' if not email.is_read else 'secondary' }} text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        {{ email.sender_name[0] if email.sender_name else 'U' }}
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1 {{ 'fw-bold' if not email.is_read else '' }}">
+                                                {{ email.subject[:50] }}{% if email.subject|length > 50 %}...{% endif %}
+                                            </h6>
+                                            <small class="text-muted">
+                                                From: {{ email.sender_name or email.sender_email }}
+                                            </small>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ email.received_date|datetime_format if email.received_date else 'Unknown' }}
+                                        </small>
+                                    </div>
+                                    {% if email.body_preview %}
+                                    <p class="text-muted small mb-0 mt-1">
+                                        {{ email.body_preview[:80] }}{% if email.body_preview|length > 80 %}...{% endif %}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+                                <p class="text-muted">No recent emails found. Click "Sync Emails" to fetch your latest messages.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions & AI Suggestions -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="askAI('Summarize my unread emails')">
+                            <i class="bi bi-list-ul"></i> Summarize Unread
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="askAI('Show me important emails from today')">
+                            <i class="bi bi-star"></i> Important Today
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="askAI('Find emails that need my response')">
+                            <i class="bi bi-reply"></i> Need Response
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="askAI('Help me organize my inbox')">
+                            <i class="bi bi-folder"></i> Organize Inbox
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Suggestions -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">AI Suggestions</h6>
+                </div>
+                <div class="card-body">
+                    <div id="aiSuggestions">
+                        <div class="d-flex align-items-center justify-content-center py-3">
+                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <small class="text-muted">Loading suggestions...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Analytics Preview -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Email Insights</h6>
+                </div>
+                <div class="card-body">
+                    <div id="emailInsights">
+                        <div class="text-center py-3">
+                            <small class="text-muted">Loading insights...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sync Progress Modal -->
+<div class="modal fade" id="syncModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Syncing Emails</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0">Fetching your latest emails...</p>
+                <small class="text-muted" id="syncProgress">Starting sync...</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load dashboard data
+    loadEmailStats();
+    loadAISuggestions();
+    loadEmailInsights();
+    
+    // Sync emails button
+    $('#syncEmailsBtn').click(function() {
+        syncEmails();
+    });
+    
+    // Auto-refresh every 5 minutes
+    setInterval(function() {
+        loadEmailStats();
+    }, 300000);
+});
+
+function loadEmailStats() {
+    $.get('/api/email/stats')
+        .done(function(data) {
+            $('#unreadEmails').text(data.unread_emails);
+            $('#weeklyEmails').text(data.recent_emails);
+            updateLastSync();
+        })
+        .fail(function() {
+            $('#unreadEmails').text('Error');
+            $('#weeklyEmails').text('Error');
+        });
+}
+
+function loadAISuggestions() {
+    $.get('/api/chat/suggestions')
+        .done(function(data) {
+            let html = '';
+            if (data.suggestions && data.suggestions.length > 0) {
+                data.suggestions.slice(0, 4).forEach(function(suggestion) {
+                    html += `
+                        <div class="suggestion-item p-2 border-bottom">
+                            <button class="btn btn-link btn-sm text-start p-0" onclick="askAI('${suggestion}')">
+                                <i class="bi bi-lightbulb text-warning me-2"></i>
+                                ${suggestion}
+                            </button>
+                        </div>
+                    `;
+                });
+            } else {
+                html = '<div class="text-center py-3"><small class="text-muted">No suggestions available</small></div>';
+            }
+            $('#aiSuggestions').html(html);
+        })
+        .fail(function() {
+            $('#aiSuggestions').html('<div class="text-center py-3"><small class="text-muted text-danger">Failed to load suggestions</small></div>');
+        });
+}
+
+function loadEmailInsights() {
+    $.get('/api/chat/stats')
+        .done(function(data) {
+            if (data.stats) {
+                let html = `
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h6 class="text-primary mb-1">${data.stats.total_messages}</h6>
+                                <small class="text-muted">AI Chats</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="text-success mb-1">${data.stats.success_rate ? data.stats.success_rate.toFixed(1) + '%' : 'N/A'}</h6>
+                            <small class="text-muted">Success Rate</small>
+                        </div>
+                    </div>
+                `;
+                if (data.stats.avg_response_time_ms) {
+                    html += `
+                        <div class="text-center mt-2">
+                            <small class="text-muted">Avg Response: ${data.stats.avg_response_time_ms}ms</small>
+                        </div>
+                    `;
+                }
+                $('#emailInsights').html(html);
+            }
+        })
+        .fail(function() {
+            $('#emailInsights').html('<div class="text-center py-3"><small class="text-muted text-danger">Failed to load insights</small></div>');
+        });
+}
+
+function syncEmails() {
+    $('#syncModal').modal('show');
+    $('#syncProgress').text('Starting sync...');
+    
+    $.post('/api/email/sync', {
+        folder: 'inbox',
+        limit: 50
+    })
+    .done(function(data) {
+        $('#syncModal').modal('hide');
+        if (data.success) {
+            // Show success message
+            showAlert('success', `Sync completed! ${data.new_count} new emails, ${data.updated_count} updated.`);
+            // Refresh stats and recent emails
+            loadEmailStats();
+            location.reload(); // Reload to show new emails
+        } else {
+            showAlert('danger', 'Sync failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .fail(function(xhr) {
+        $('#syncModal').modal('hide');
+        let error = xhr.responseJSON ? xhr.responseJSON.error : 'Network error';
+        showAlert('danger', 'Sync failed: ' + error);
+    });
+}
+
+function askAI(question) {
+    // Redirect to chat with pre-filled question
+    window.location.href = `/chat?q=${encodeURIComponent(question)}`;
+}
+
+function showAlert(type, message) {
+    let alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('.container-fluid').prepend(alertHtml);
+}
+
+function updateLastSync() {
+    $('#lastSync').text('Just now');
+}
+
+// Custom datetime filter for Jinja2 (if needed)
+function formatDateTime(dateString) {
+    if (!dateString) return 'Unknown';
+    let date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+</script>
+{% endblock %}

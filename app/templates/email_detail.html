@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}{{ email.subject }} - AI Email Assistant{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Email Content Column -->
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📧 Email Details</h5>
+                    <div>
+                        <a href="{{ url_for('main.emails') }}" class="btn btn-outline-secondary btn-sm">
+                            ← Back to Inbox
+                        </a>
+                        {% if not email.is_read %}
+                        <button class="btn btn-primary btn-sm" onclick="markEmailRead({{ email.id }})">
+                            Mark as Read
+                        </button>
+                        {% else %}
+                        <button class="btn btn-outline-secondary btn-sm" onclick="markEmailUnread({{ email.id }})">
+                            Mark as Unread
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Email Header -->
+                    <div class="email-header mb-4">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4 class="email-subject">{{ email.subject or 'No Subject' }}</h4>
+                                <p class="text-muted mb-1">
+                                    <strong>From:</strong> 
+                                    {% if email.sender_name %}
+                                        {{ email.sender_name }} &lt;{{ email.sender_email }}&gt;
+                                    {% else %}
+                                        {{ email.sender_email }}
+                                    {% endif %}
+                                </p>
+                                <p class="text-muted mb-1">
+                                    <strong>To:</strong> {{ user.email }}
+                                </p>
+                                <p class="text-muted mb-0">
+                                    <strong>Date:</strong> 
+                                    {% if email.received_date %}
+                                        {{ email.received_date.strftime('%B %d, %Y at %I:%M %p') }}
+                                    {% else %}
+                                        Unknown
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                {% if email.importance == 'high' %}
+                                    <span class="badge bg-danger">High Priority</span>
+                                {% elif email.importance == 'low' %}
+                                    <span class="badge bg-secondary">Low Priority</span>
+                                {% endif %}
+                                
+                                {% if email.has_attachments %}
+                                    <span class="badge bg-info">📎 Attachments</span>
+                                {% endif %}
+                                
+                                {% if email.is_read %}
+                                    <span class="badge bg-success">Read</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Unread</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Email Body -->
+                    <div class="email-body">
+                        {% if email.body_html and email.body_html.strip() %}
+                            <div class="email-html-body">
+                                {{ email.body_html|safe }}
+                            </div>
+                        {% elif email.body_text and email.body_text.strip() %}
+                            <div class="email-text-body">
+                                <pre style="white-space: pre-wrap; font-family: inherit;">{{ email.body_text }}</pre>
+                            </div>
+                        {% elif email.body_preview and email.body_preview.strip() %}
+                            <div class="email-preview-body">
+                                <div class="alert alert-info">
+                                    <strong>Preview:</strong> {{ email.body_preview }}
+                                </div>
+                                <p class="text-muted">
+                                    <em>Full content not available. <button class="btn btn-sm btn-primary" onclick="syncFullContent()">Sync Full Content</button></em>
+                                </p>
+                            </div>
+                        {% else %}
+                            <div class="no-content-section">
+                                <div class="alert alert-warning">
+                                    <h6>📭 No Email Content Available</h6>
+                                    <p class="mb-2">This email's content wasn't synced properly.</p>
+                                    <button class="btn btn-primary btn-sm" onclick="syncFullContent()">
+                                        🔄 Sync Full Content
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Email Actions -->
+                    <hr>
+                    <div class="email-actions">
+                        <button class="btn btn-primary" onclick="startReply()">
+                            📤 Reply
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="startForward()">
+                            ↗️ Forward  
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteEmail()">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Emails -->
+            {% if related_emails %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">📎 Related Emails</h6>
+                </div>
+                <div class="card-body">
+                    {% for related in related_emails %}
+                    <div class="border-bottom py-2">
+                        <a href="{{ url_for('email.email_detail', email_id=related.id) }}" class="text-decoration-none">
+                            <strong>{{ related.subject or 'No Subject' }}</strong>
+                        </a>
+                        <br>
+                        <small class="text-muted">
+                            {{ related.received_date.strftime('%b %d, %Y') if related.received_date else 'Unknown' }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- AI Chat Column -->
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">🤖 AI Email Assistant</h5>
+                    <small class="text-muted">Ask me anything about this email</small>
+                </div>
+                
+                <div class="card-body d-flex flex-column">
+                    <!-- Chat Messages -->
+                    <div class="chat-messages flex-grow-1" id="chatMessages" style="max-height: 400px; overflow-y: auto;">
+                        <div class="message assistant mb-3">
+                            <div class="message-content p-3 bg-light rounded">
+                                <strong>AI Assistant:</strong> I can see you're viewing an email from <strong>{{ email.sender_name or email.sender_email }}</strong> about "<strong>{{ email.subject }}</strong>". 
+                                <br><br>
+                                How can I help you with this email? I can:
+                                <ul class="mb-0 mt-2">
+                                    <li>Summarize the content</li>
+                                    <li>Help you draft a reply</li>
+                                    <li>Identify action items</li>
+                                    <li>Assess priority level</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Suggestions -->
+                    <div class="chat-suggestions mb-3">
+                        <small class="text-muted">Quick actions:</small><br>
+                        <button class="btn btn-outline-primary btn-sm me-1 mb-1" onclick="sendQuickMessage('Summarize this email')">
+                            📝 Summarize
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm me-1 mb-1" onclick="sendQuickMessage('Help me reply to this email')">
+                            📤 Help Reply
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm me-1 mb-1" onclick="sendQuickMessage('What are the action items?')">
+                            ✅ Action Items
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm me-1 mb-1" onclick="sendQuickMessage('Is this email important?')">
+                            ⭐ Priority
+                        </button>
+                    </div>
+                    
+                    <!-- Chat Input -->
+                    <div class="chat-input">
+                        <form id="chatForm" onsubmit="sendMessage(event)">
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="messageInput" 
+                                       placeholder="Ask me about this email..."
+                                       required>
+                                <button class="btn btn-primary" type="submit">
+                                    Send
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.email-header {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.email-body {
+    line-height: 1.6;
+}
+
+.email-html-body {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.email-text-body pre {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.chat-messages {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #fafafa;
+}
+
+.message {
+    margin-bottom: 15px;
+}
+
+.message.user .message-content {
+    background-color: #007bff !important;
+    color: white !important;
+    margin-left: 20%;
+}
+
+.message.assistant .message-content {
+    background-color: #e9ecef !important;
+    color: #333 !important;
+    margin-right: 20%;
+}
+
+.chat-suggestions button {
+    font-size: 0.85em;
+}
+</style>
+
+<script>
+const emailId = {{ email.id }};
+
+function sendMessage(event) {
+    event.preventDefault();
+    
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessage('user', message);
+    messageInput.value = '';
+    
+    // Add loading message
+    addMessage('assistant', 'Thinking...', true);
+    
+    // Send to API
+    fetch(`/api/email/${emailId}/chat`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Remove loading message
+        const loadingMsg = document.querySelector('.loading');
+        if (loadingMsg) {
+            loadingMsg.remove();
+        }
+        
+        if (data.success) {
+            addMessage('assistant', data.response);
+        } else {
+            addMessage('assistant', 'Sorry, I encountered an error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        // Remove loading message
+        const loadingMsg = document.querySelector('.loading');
+        if (loadingMsg) {
+            loadingMsg.remove();
+        }
+        
+        addMessage('assistant', 'Sorry, I encountered a network error: ' + error.message);
+    });
+}
+
+function sendQuickMessage(message) {
+    document.getElementById('messageInput').value = message;
+    document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+}
+
+function addMessage(role, content, isLoading = false) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    if (isLoading) {
+        messageDiv.classList.add('loading');
+    }
+    
+    messageDiv.innerHTML = `
+        <div class="message-content p-3 rounded">
+            <strong>${role === 'user' ? 'You' : 'AI Assistant'}:</strong> ${content}
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Mark email functions (from previous implementation)
+function markEmailRead(emailId) {
+    fetch(`/api/email/${emailId}/mark-read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Refresh to update UI
+        } else {
+            alert('Failed to mark as read: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function markEmailUnread(emailId) {
+    fetch(`/api/email/${emailId}/mark-unread`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Refresh to update UI
+        } else {
+            alert('Failed to mark as unread: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+// Auto-focus chat input
+document.getElementById('messageInput').focus();
+</script>
+{% endblock %}

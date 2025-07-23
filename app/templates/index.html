@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}AI Email Assistant - Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <!-- Microsoft Sign-in Section -->
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-8">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">🔑 Sign in with Microsoft 365</h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text">Sign in with your Microsoft account to sync real emails from <strong>stephendavies@peoplesainetwork.com</strong></p>
+                        <a href="/auth/microsoft" class="btn btn-primary btn-lg mb-3">
+                            <i class="bi bi-microsoft"></i> Sign in with Microsoft 365
+                        </a>
+                        <br>
+                        <small class="text-muted">This will create a real user and sync your actual emails</small>
+                        <hr>
+                        <a href="/auth/login" class="btn btn-secondary">
+                            Continue with Demo (current mode)
+                        </a>
+                        <br>
+                        <small class="text-muted">Demo mode only shows sample emails</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="bi bi-robot"></i> AI Email Assistant
+                </h1>
+                <p class="lead mb-4">
+                    Transform your email management with AI-powered insights, smart organization, 
+                    and intelligent responses. Connect your Office 365 account and let AI help you 
+                    stay on top of your communications.
+                </p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg px-4 me-md-2">
+                        <i class="bi bi-microsoft"></i> Sign in with Microsoft
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="text-center">
+                    <i class="bi bi-envelope-at" style="font-size: 15rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-3">Powerful AI Features</h2>
+                <p class="lead text-muted">
+                    Leverage the power of local AI models to understand, organize, and respond to your emails intelligently.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-chat-dots fs-4"></i>
+                        </div>
+                        <h5 class="card-title">AI Chat Assistant</h5>
+                        <p class="card-text">
+                            Ask questions about your emails, get summaries, and receive intelligent suggestions 
+                            using DeepSeek-R1 AI model running locally.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-search fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Smart Email Search</h5>
+                        <p class="card-text">
+                            Find emails using natural language queries. Our vector database understands 
+                            context and meaning, not just keywords.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-graph-up fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Email Analytics</h5>
+                        <p class="card-text">
+                            Get insights into your email patterns, sentiment analysis, and priority scoring 
+                            to optimize your communication workflow.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-pencil-square fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Intelligent Drafting</h5>
+                        <p class="card-text">
+                            Generate professional email responses and drafts based on your writing style 
+                            and communication patterns.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-shield-check fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Privacy First</h5>
+                        <p class="card-text">
+                            Your data stays secure with local AI processing. No emails are sent to external 
+                            servers for AI analysis.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-microsoft fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Office 365 Integration</h5>
+                        <p class="card-text">
+                            Seamlessly connect with your Microsoft Office 365 account to access emails, 
+                            calendar, and other productivity tools.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it Works Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-3">How It Works</h2>
+                <p class="lead text-muted">
+                    Get started in just a few simple steps and transform your email experience.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <span class="fs-2 fw-bold">1</span>
+                    </div>
+                    <h5>Connect Your Account</h5>
+                    <p class="text-muted">
+                        Sign in with your Microsoft Office 365 account to securely access your emails.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <span class="fs-2 fw-bold">2</span>
+                    </div>
+                    <h5>AI Processes Your Emails</h5>
+                    <p class="text-muted">
+                        Our AI analyzes your emails locally, creating smart indexes and understanding patterns.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <span class="fs-2 fw-bold">3</span>
+                    </div>
+                    <h5>Start Chatting</h5>
+                    <p class="text-muted">
+                        Ask questions, get summaries, and receive intelligent assistance with your email management.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Technology Stack Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-3">Powered by Modern AI</h2>
+                <p class="lead text-muted">
+                    Built with cutting-edge technology for the best performance and privacy.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-3 col-sm-6">
+                <div class="text-center">
+                    <div class="bg-dark text-white rounded p-3 mb-3">
+                        <h6 class="mb-0">Ollama</h6>
+                    </div>
+                    <small class="text-muted">Local AI Runtime</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded p-3 mb-3">
+                        <h6 class="mb-0">DeepSeek-R1</h6>
+                    </div>
+                    <small class="text-muted">AI Language Model</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="text-center">
+                    <div class="bg-success text-white rounded p-3 mb-3">
+                        <h6 class="mb-0">ChromaDB</h6>
+                    </div>
+                    <small class="text-muted">Vector Database</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="text-center">
+                    <div class="bg-info text-white rounded p-3 mb-3">
+                        <h6 class="mb-0">Microsoft Graph</h6>
+                    </div>
+                    <small class="text-muted">Office 365 API</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-4">Ready to Transform Your Email Experience?</h2>
+                <p class="lead mb-4">
+                    Join the future of email management with AI-powered assistance.
+                </p>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg px-5">
+                    <i class="bi bi-microsoft"></i> Get Started Now
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

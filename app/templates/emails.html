@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}Emails - AI Email Assistant{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">Email Management</h1>
+                    <p class="text-muted mb-0">Organize and manage your emails with AI assistance</p>
+                </div>
+                <div>
+                    <button class="btn btn-success" id="composeBtn">
+                        <i class="bi bi-plus-circle"></i> Compose
+                    </button>
+                    <button class="btn btn-primary" id="syncEmailsBtn">
+                        <i class="bi bi-arrow-clockwise"></i> Sync
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Folders</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="folderList">
+                        <div class="list-group-item list-group-item-action active folder-item" data-folder="inbox">
+                            <i class="bi bi-inbox me-2"></i> Inbox
+                            <span class="badge bg-primary float-end" id="inboxCount">0</span>
+                        </div>
+                        <div class="list-group-item list-group-item-action folder-item" data-folder="sent">
+                            <i class="bi bi-send me-2"></i> Sent Items
+                        </div>
+                        <div class="list-group-item list-group-item-action folder-item" data-folder="drafts">
+                            <i class="bi bi-file-earmark me-2"></i> Drafts
+                        </div>
+                        <div class="list-group-item list-group-item-action folder-item" data-folder="archive">
+                            <i class="bi bi-archive me-2"></i> Archive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <form id="emailSearchForm">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="emailSearchInput" 
+                                   placeholder="Search emails...">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Email List -->
+        <div class="col-md-9 col-lg-10">
+            <!-- Bulk Actions Bar -->
+            <div id="bulkActionBar" class="card mb-3" style="display: none;">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center">
+                        <span class="me-3">
+                            <span id="selectedCount">0</span> emails selected
+                        </span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" id="bulkMarkRead">
+                                <i class="bi bi-envelope-open"></i> Mark Read
+                            </button>
+                            <button class="btn btn-outline-secondary" id="bulkMarkUnread">
+                                <i class="bi bi-envelope"></i> Mark Unread
+                            </button>
+                            <button class="btn btn-outline-danger" id="bulkDelete">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email List -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
+                                <label class="form-check-label fw-bold" for="selectAll">
+                                    Emails
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                        type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-funnel"></i> Filter
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="unread">
+                                        <i class="bi bi-envelope"></i> Unread
+                                    </a></li>
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="important">
+                                        <i class="bi bi-star"></i> Important
+                                    </a></li>
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="attachments">
+                                        <i class="bi bi-paperclip"></i> Has Attachments
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="all">
+                                        <i class="bi bi-list"></i> All Emails
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="emailList">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading emails...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Email pagination" class="mt-3">
+                <ul class="pagination justify-content-center" id="emailPagination">
+                    <!-- Pagination will be dynamically generated -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal fade" id="emailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailModalTitle">Email Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="emailModalBody">
+                <!-- Email content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="replyBtn">
+                    <i class="bi bi-reply"></i> Reply
+                </button>
+                <button type="button" class="btn btn-success" id="forwardBtn">
+                    <i class="bi bi-arrow-right"></i> Forward
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compose Modal -->
+<div class="modal fade" id="composeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Compose Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="composeForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="composeTo" class="form-label">To</label>
+                        <input type="email" class="form-control" id="composeTo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="composeCc" class="form-label">CC</label>
+                        <input type="email" class="form-control" id="composeCc">
+                    </div>
+                    <div class="mb-3">
+                        <label for="composeSubject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="composeSubject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="composeBody" class="form-label">Message</label>
+                        <textarea class="form-control" id="composeBody" rows="10" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-info" id="aiDraftBtn">
+                        <i class="bi bi-robot"></i> AI Draft
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Send
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load initial email list
+    loadEmails('inbox');
+    
+    // Setup event handlers
+    setupEmailEventHandlers();
+    
+    // Load folder counts
+    loadFolderCounts();
+});
+
+function setupEmailEventHandlers() {
+    // Folder navigation
+    $('.folder-item').click(function() {
+        const folder = $(this).data('folder');
+        $('.folder-item').removeClass('active');
+        $(this).addClass('active');
+        loadEmails(folder);
+    });
+    
+    // Email search
+    $('#emailSearchForm').submit(function(e) {
+        e.preventDefault();
+        const query = $('#emailSearchInput').val().trim();
+        if (query) {
+            searchEmails(query);
+        }
+    });
+    
+    // Compose email
+    $('#composeBtn').click(function() {
+        $('#composeModal').modal('show');
+    });
+    
+    // Compose form
+    $('#composeForm').submit(function(e) {
+        e.preventDefault();
+        sendEmail();
+    });
+    
+    // AI Draft button
+    $('#aiDraftBtn').click(function() {
+        generateAIDraft();
+    });
+    
+    // Sync emails
+    $('#syncEmailsBtn').click(function() {
+        syncEmails();
+    });
+    
+    // Filter options
+    $('.filter-option').click(function(e) {
+        e.preventDefault();
+        const filter = $(this).data('filter');
+        applyEmailFilter(filter);
+    });
+}
+
+function loadEmails(folder, page = 1) {
+    const emailList = $('#emailList');
+    emailList.html('<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>');
+    
+    $.get('/api/email/list', { 
+        folder: folder,
+        limit: 50,
+        offset: (page - 1) * 50
+    })
+    .done(function(data) {
+        displayEmails(data.emails);
+        updatePagination(data.count, page);
+    })
+    .fail(function() {
+        emailList.html('<div class="text-center py-4 text-danger">Failed to load emails</div>');
+    });
+}
+
+function displayEmails(emails) {
+    const emailList = $('#emailList');
+    let html = '';
+    
+    if (emails && emails.length > 0) {
+        emails.forEach(function(email) {
+            html += createEmailListItem(email);
+        });
+    } else {
+        html = '<div class="text-center py-4 text-muted">No emails found</div>';
+    }
+    
+    emailList.html(html);
+}
+
+function createEmailListItem(email) {
+    const isUnread = !email.is_read;
+    const senderName = email.sender_name || email.sender_email;
+    const date = formatDate(email.received_date);
+    const preview = email.body_preview || '';
+    
+    return `
+        <div class="email-item ${isUnread ? 'unread' : 'read'} p-3 border-bottom cursor-pointer" 
+             data-email-id="${email.id}">
+            <div class="row align-items-center">
+                <div class="col-md-1">
+                    <input type="checkbox" class="form-check-input email-checkbox" 
+                           value="${email.id}">
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                             style="width: 32px; height: 32px; font-size: 0.8rem;">
+                            ${senderName.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="${isUnread ? 'fw-bold' : ''}">${senderName}</span>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="${isUnread ? 'fw-bold' : ''}">${email.subject}</div>
+                    <small class="text-muted text-truncate d-block">${preview}</small>
+                </div>
+                <div class="col-md-2 text-end">
+                    <small class="text-muted">${date}</small>
+                    ${email.has_attachments ? '<i class="bi bi-paperclip text-muted ms-1"></i>' : ''}
+                </div>
+                <div class="col-md-1 text-end">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary mark-read-btn" 
+                                data-email-id="${email.id}" data-read="${email.is_read}"
+                                title="${isUnread ? 'Mark as read' : 'Mark as unread'}">
+                            <i class="bi ${isUnread ? 'bi-envelope' : 'bi-envelope-open'}"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function searchEmails(query) {
+    const emailList = $('#emailList');
+    emailList.html('<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>');
+    
+    $.get('/api/email/search', { q: query })
+        .done(function(data) {
+            displayEmails(data.emails);
+            
+            // Show search results header
+            const resultsHeader = `
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-search"></i> 
+                    Found ${data.emails.length} results for "${query}"
+                    <button class="btn btn-sm btn-outline-info float-end" onclick="loadEmails('inbox')">
+                        Clear Search
+                    </button>
+                </div>
+            `;
+            emailList.prepend(resultsHeader);
+        })
+        .fail(function() {
+            emailList.html('<div class="text-center py-4 text-danger">Search failed</div>');
+        });
+}
+
+function sendEmail() {
+    const formData = {
+        to_recipients: [$('#composeTo').val()],
+        cc_recipients: $('#composeCc').val() ? [$('#composeCc').val()] : [],
+        subject: $('#composeSubject').val(),
+        body: $('#composeBody').val()
+    };
+    
+    $.post('/api/email/send', formData)
+        .done(function(data) {
+            if (data.success) {
+                $('#composeModal').modal('hide');
+                showAlert('success', 'Email sent successfully!');
+                // Clear form
+                $('#composeForm')[0].reset();
+            } else {
+                showAlert('danger', 'Failed to send email: ' + data.error);
+            }
+        })
+        .fail(function() {
+            showAlert('danger', 'Failed to send email');
+        });
+}
+
+function generateAIDraft() {
+    const to = $('#composeTo').val();
+    const subject = $('#composeSubject').val();
+    
+    if (!to || !subject) {
+        showAlert('warning', 'Please enter recipient and subject first');
+        return;
+    }
+    
+    $('#aiDraftBtn').prop('disabled', true).html('<div class="spinner-border spinner-border-sm" role="status"></div> Generating...');
+    
+    $.post('/api/chat/message', {
+        message: `Draft a professional email to ${to} with subject "${subject}"`,
+        context_type: 'email_draft'
+    })
+    .done(function(data) {
+        $('#composeBody').val(data.response);
+        showAlert('success', 'AI draft generated!');
+    })
+    .fail(function() {
+        showAlert('danger', 'Failed to generate AI draft');
+    })
+    .always(function() {
+        $('#aiDraftBtn').prop('disabled', false).html('<i class="bi bi-robot"></i> AI Draft');
+    });
+}
+
+function syncEmails() {
+    $('#syncEmailsBtn').prop('disabled', true).html('<div class="spinner-border spinner-border-sm" role="status"></div> Syncing...');
+    
+    $.post('/api/email/sync')
+        .done(function(data) {
+            if (data.success) {
+                showAlert('success', `Sync completed! ${data.new_count} new emails`);
+                loadEmails('inbox'); // Reload current folder
+                loadFolderCounts(); // Update counts
+            } else {
+                showAlert('danger', 'Sync failed: ' + data.error);
+            }
+        })
+        .fail(function() {
+            showAlert('danger', 'Sync failed');
+        })
+        .always(function() {
+            $('#syncEmailsBtn').prop('disabled', false).html('<i class="bi bi-arrow-clockwise"></i> Sync');
+        });
+}
+
+function loadFolderCounts() {
+    $.get('/api/email/stats')
+        .done(function(data) {
+            $('#inboxCount').text(data.unread_emails || 0);
+        });
+}
+
+function applyEmailFilter(filter) {
+    let params = {};
+    
+    switch(filter) {
+        case 'unread':
+            params.is_read = false;
+            break;
+        case 'important':
+            params.importance = 'high';
+            break;
+        case 'attachments':
+            params.has_attachments = true;
+            break;
+        case 'all':
+        default:
+            // No additional filters
+            break;
+    }
+    
+    const emailList = $('#emailList');
+    emailList.html('<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>');
+    
+    $.get('/api/email/list', params)
+        .done(function(data) {
+            displayEmails(data.emails);
+        })
+        .fail(function() {
+            emailList.html('<div class="text-center py-4 text-danger">Failed to load emails</div>');
+        });
+}
+
+function updatePagination(totalCount, currentPage) {
+    const itemsPerPage = 50;
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
+    const pagination = $('#emailPagination');
+    
+    if (totalPages <= 1) {
+        pagination.empty();
+        return;
+    }
+    
+    let html = '';
+    
+    // Previous button
+    html += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+        html += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" data-page="${i}">${i}</a>
+            </li>
+        `;
+    }
+    
+    // Next button
+    html += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+        </li>
+    `;
+    
+    pagination.html(html);
+    
+    // Handle pagination clicks
+    $('.page-link').click(function(e) {
+        e.preventDefault();
+        const page = parseInt($(this).data('page'));
+        if (page > 0 && page <= totalPages) {
+            const activeFolder = $('.folder-item.active').data('folder');
+            loadEmails(activeFolder, page);
+        }
+    });
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+        return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    } else if (diffDays <= 7) {
+        return date.toLocaleDateString([], {weekday: 'short'});
+    } else {
+        return date.toLocaleDateString([], {month: 'short', day: 'numeric'});
+    }
+}
+
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('.container-fluid').prepend(alertHtml);
+    
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+}
+</script>
+{% endblock %}

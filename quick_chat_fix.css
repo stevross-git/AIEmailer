@@ -1,0 +1,17 @@
+/* Quick Chat UI Fix - Add to style.css if needed */
+.message {
+    color: #212529 !important;
+    background-color: #f8f9fa !important;
+    padding: 10px !important;
+    margin: 10px 0 !important;
+    border-radius: 8px !important;
+}
+
+.chat-input {
+    color: #212529 !important;
+    background-color: #ffffff !important;
+}
+
+.chat-response, .chat-response * {
+    color: #212529 !important;
+}

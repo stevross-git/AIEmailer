@@ -1,0 +1,603 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - AI Email Assistant{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Settings Navigation -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Settings</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#profile" class="list-group-item list-group-item-action active" data-section="profile">
+                        <i class="bi bi-person me-2"></i> Profile
+                    </a>
+                    <a href="#email" class="list-group-item list-group-item-action" data-section="email">
+                        <i class="bi bi-envelope me-2"></i> Email Settings
+                    </a>
+                    <a href="#ai" class="list-group-item list-group-item-action" data-section="ai">
+                        <i class="bi bi-robot me-2"></i> AI Preferences
+                    </a>
+                    <a href="#notifications" class="list-group-item list-group-item-action" data-section="notifications">
+                        <i class="bi bi-bell me-2"></i> Notifications
+                    </a>
+                    <a href="#privacy" class="list-group-item list-group-item-action" data-section="privacy">
+                        <i class="bi bi-shield-check me-2"></i> Privacy & Security
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <!-- Profile Settings -->
+            <div id="profile-section" class="settings-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Profile Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="profileForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="displayName" class="form-label">Display Name</label>
+                                    <input type="text" class="form-control" id="displayName" 
+                                           value="{{ user.display_name }}" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" 
+                                           value="{{ user.email }}" readonly>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="jobTitle" class="form-label">Job Title</label>
+                                    <input type="text" class="form-control" id="jobTitle" 
+                                           value="{{ user.job_title or '' }}" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="officeLocation" class="form-label">Office Location</label>
+                                    <input type="text" class="form-control" id="officeLocation" 
+                                           value="{{ user.office_location or '' }}" readonly>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="timezone" class="form-label">Timezone</label>
+                                <select class="form-select" id="timezone">
+                                    <option value="UTC">UTC</option>
+                                    <option value="America/New_York">Eastern Time</option>
+                                    <option value="America/Chicago">Central Time</option>
+                                    <option value="America/Denver">Mountain Time</option>
+                                    <option value="America/Los_Angeles">Pacific Time</option>
+                                </select>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Profile information is synced from your Microsoft 365 account and cannot be edited here.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Settings -->
+            <div id="email-section" class="settings-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Email Synchronization</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="emailSettingsForm">
+                            <div class="mb-3">
+                                <label class="form-label">Folders to Sync</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="syncInbox" checked>
+                                    <label class="form-check-label" for="syncInbox">Inbox</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="syncSent" checked>
+                                    <label class="form-check-label" for="syncSent">Sent Items</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="syncDrafts">
+                                    <label class="form-check-label" for="syncDrafts">Drafts</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="syncInterval" class="form-label">Auto-sync Interval</label>
+                                <select class="form-select" id="syncInterval">
+                                    <option value="5">Every 5 minutes</option>
+                                    <option value="15">Every 15 minutes</option>
+                                    <option value="30" selected>Every 30 minutes</option>
+                                    <option value="60">Every hour</option>
+                                    <option value="0">Manual only</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="maxEmails" class="form-label">Maximum Emails per Sync</label>
+                                <input type="number" class="form-control" id="maxEmails" 
+                                       value="500" min="50" max="1000" step="50">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Email Settings</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Email Processing</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="processingForm">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="enableAIAnalysis" checked>
+                                <label class="form-check-label" for="enableAIAnalysis">
+                                    Enable AI Analysis
+                                    <small class="text-muted d-block">Automatically analyze emails for sentiment, priority, and tags</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="enableVectorIndexing" checked>
+                                <label class="form-check-label" for="enableVectorIndexing">
+                                    Enable Vector Indexing
+                                    <small class="text-muted d-block">Create searchable embeddings for semantic search</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="enableThreadGrouping" checked>
+                                <label class="form-check-label" for="enableThreadGrouping">
+                                    Enable Thread Grouping
+                                    <small class="text-muted d-block">Automatically group related emails into conversations</small>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Processing Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Preferences -->
+            <div id="ai-section" class="settings-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">AI Model Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="aiSettingsForm">
+                            <div class="mb-3">
+                                <label for="aiModel" class="form-label">AI Model</label>
+                                <select class="form-select" id="aiModel">
+                                    <option value="deepseek-r1:7b" selected>DeepSeek-R1 7B</option>
+                                    <option value="deepseek-r1:14b">DeepSeek-R1 14B</option>
+                                    <option value="llama2:7b">Llama 2 7B</option>
+                                </select>
+                                <small class="text-muted">Choose the AI model for email analysis and chat</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="responseStyle" class="form-label">Response Style</label>
+                                <select class="form-select" id="responseStyle">
+                                    <option value="professional" selected>Professional</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="concise">Concise</option>
+                                    <option value="detailed">Detailed</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="temperature" class="form-label">Creativity Level</label>
+                                <input type="range" class="form-range" id="temperature" 
+                                       min="0" max="1" step="0.1" value="0.7">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">Conservative</small>
+                                    <small class="text-muted">Creative</small>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save AI Settings</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">AI Assistance Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="assistanceForm">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="enableSmartReplies" checked>
+                                <label class="form-check-label" for="enableSmartReplies">
+                                    Smart Reply Suggestions
+                                    <small class="text-muted d-block">Show AI-generated reply suggestions</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="enableEmailDrafting" checked>
+                                <label class="form-check-label" for="enableEmailDrafting">
+                                    AI Email Drafting
+                                    <small class="text-muted d-block">Allow AI to help compose emails</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="enableAutoSummary" checked>
+                                <label class="form-check-label" for="enableAutoSummary">
+                                    Automatic Email Summaries
+                                    <small class="text-muted d-block">Generate summaries for long emails</small>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Assistance Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div id="notifications-section" class="settings-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Notification Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="notificationForm">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                <label class="form-check-label" for="emailNotifications">
+                                    New Email Notifications
+                                    <small class="text-muted d-block">Get notified when new emails arrive</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="importantEmailNotifications" checked>
+                                <label class="form-check-label" for="importantEmailNotifications">
+                                    Important Email Alerts
+                                    <small class="text-muted d-block">Special notifications for high-priority emails</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="aiInsightNotifications">
+                                <label class="form-check-label" for="aiInsightNotifications">
+                                    AI Insight Notifications
+                                    <small class="text-muted d-block">Get notified about AI-generated insights</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="syncNotifications">
+                                <label class="form-check-label" for="syncNotifications">
+                                    Sync Status Notifications
+                                    <small class="text-muted d-block">Show sync progress and errors</small>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Notification Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy & Security -->
+            <div id="privacy-section" class="settings-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Privacy Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-shield-check me-2"></i>
+                            <strong>Your privacy is protected:</strong> All AI processing happens locally on your machine. 
+                            Your email content is never sent to external servers.
+                        </div>
+                        
+                        <form id="privacyForm">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="storeEmailContent" checked>
+                                <label class="form-check-label" for="storeEmailContent">
+                                    Store Email Content Locally
+                                    <small class="text-muted d-block">Required for AI analysis and search</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="enableAnalytics">
+                                <label class="form-check-label" for="enableAnalytics">
+                                    Usage Analytics
+                                    <small class="text-muted d-block">Help improve the application (anonymous data only)</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="enableErrorReporting">
+                                <label class="form-check-label" for="enableErrorReporting">
+                                    Error Reporting
+                                    <small class="text-muted d-block">Automatically report errors to help fix issues</small>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Privacy Settings</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Data Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h6>Export Data</h6>
+                                <p class="text-muted small">Download your email data and AI insights</p>
+                                <button class="btn btn-outline-primary" id="exportDataBtn">
+                                    <i class="bi bi-download"></i> Export Data
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6>Clear Vector Database</h6>
+                                <p class="text-muted small">Remove all email embeddings and search indexes</p>
+                                <button class="btn btn-outline-warning" id="clearVectorDbBtn">
+                                    <i class="bi bi-database-x"></i> Clear Index
+                                </button>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <h6 class="text-danger">Danger Zone</h6>
+                            <p class="text-muted small">Permanently delete all your data from this application</p>
+                            <button class="btn btn-danger" id="deleteAllDataBtn">
+                                <i class="bi bi-trash"></i> Delete All Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Account Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Account Created:</strong> {{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'Unknown' }}</p>
+                                <p><strong>Last Login:</strong> {{ user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.last_login else 'Never' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Last Email Sync:</strong> {{ user.last_sync.strftime('%B %d, %Y at %I:%M %p') if user.last_sync else 'Never' }}</p>
+                                <p><strong>Total Emails:</strong> <span id="totalEmailCount">Loading...</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Load user preferences
+    loadUserPreferences();
+    
+    // Setup navigation
+    setupSettingsNavigation();
+    
+    // Setup form handlers
+    setupFormHandlers();
+    
+    // Load stats
+    loadUserStats();
+});
+
+function setupSettingsNavigation() {
+    $('.list-group-item-action').click(function(e) {
+        e.preventDefault();
+        
+        const section = $(this).data('section');
+        
+        // Update active nav item
+        $('.list-group-item-action').removeClass('active');
+        $(this).addClass('active');
+        
+        // Show selected section
+        $('.settings-section').hide();
+        $(`#${section}-section`).show();
+    });
+}
+
+function setupFormHandlers() {
+    // Email settings form
+    $('#emailSettingsForm').submit(function(e) {
+        e.preventDefault();
+        saveEmailSettings();
+    });
+    
+    // AI settings form
+    $('#aiSettingsForm').submit(function(e) {
+        e.preventDefault();
+        saveAISettings();
+    });
+    
+    // Privacy form
+    $('#privacyForm').submit(function(e) {
+        e.preventDefault();
+        savePrivacySettings();
+    });
+    
+    // Data management buttons
+    $('#exportDataBtn').click(exportUserData);
+    $('#clearVectorDbBtn').click(clearVectorDatabase);
+    $('#deleteAllDataBtn').click(deleteAllUserData);
+}
+
+function loadUserPreferences() {
+    // This would load from the backend
+    console.log('Loading user preferences...');
+    
+    // Set timezone based on user preference
+    const userTimezone = '{{ user.timezone or "UTC" }}';
+    $('#timezone').val(userTimezone);
+}
+
+function saveEmailSettings() {
+    const settings = {
+        sync_inbox: $('#syncInbox').is(':checked'),
+        sync_sent: $('#syncSent').is(':checked'),
+        sync_drafts: $('#syncDrafts').is(':checked'),
+        sync_interval: parseInt($('#syncInterval').val()),
+        max_emails: parseInt($('#maxEmails').val())
+    };
+    
+    $.post('/api/settings/email', settings)
+        .done(function(data) {
+            if (data.success) {
+                showAlert('success', 'Email settings saved successfully!');
+            } else {
+                showAlert('danger', 'Failed to save settings: ' + data.error);
+            }
+        })
+        .fail(function() {
+            showAlert('danger', 'Failed to save email settings');
+        });
+}
+
+function saveAISettings() {
+    const settings = {
+        ai_model: $('#aiModel').val(),
+        response_style: $('#responseStyle').val(),
+        temperature: parseFloat($('#temperature').val()),
+        enable_smart_replies: $('#enableSmartReplies').is(':checked'),
+        enable_email_drafting: $('#enableEmailDrafting').is(':checked'),
+        enable_auto_summary: $('#enableAutoSummary').is(':checked')
+    };
+    
+    $.post('/api/settings/ai', settings)
+        .done(function(data) {
+            if (data.success) {
+                showAlert('success', 'AI settings saved successfully!');
+            } else {
+                showAlert('danger', 'Failed to save settings: ' + data.error);
+            }
+        })
+        .fail(function() {
+            showAlert('danger', 'Failed to save AI settings');
+        });
+}
+
+function savePrivacySettings() {
+    const settings = {
+        store_email_content: $('#storeEmailContent').is(':checked'),
+        enable_analytics: $('#enableAnalytics').is(':checked'),
+        enable_error_reporting: $('#enableErrorReporting').is(':checked')
+    };
+    
+    $.post('/api/settings/privacy', settings)
+        .done(function(data) {
+            if (data.success) {
+                showAlert('success', 'Privacy settings saved successfully!');
+            } else {
+                showAlert('danger', 'Failed to save settings: ' + data.error);
+            }
+        })
+        .fail(function() {
+            showAlert('danger', 'Failed to save privacy settings');
+        });
+}
+
+function exportUserData() {
+    $('#exportDataBtn').prop('disabled', true).html('<div class="spinner-border spinner-border-sm" role="status"></div> Exporting...');
+    
+    $.get('/api/export/user-data')
+        .done(function(data) {
+            // Create and download file
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `email-assistant-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('success', 'Data exported successfully!');
+        })
+        .fail(function() {
+            showAlert('danger', 'Failed to export data');
+        })
+        .always(function() {
+            $('#exportDataBtn').prop('disabled', false).html('<i class="bi bi-download"></i> Export Data');
+        });
+}
+
+function clearVectorDatabase() {
+    if (!confirm('Are you sure you want to clear the vector database? This will remove all search indexes and require re-processing of emails.')) {
+        return;
+    }
+    
+    $('#clearVectorDbBtn').prop('disabled', true).html '<div class="spinner-border spinner-border-sm" role="status"></div> Clearing...');
+    
+    $.post('/api/vector-db/clear')
+        .done(function(data) {
+            if (data.success) {
+                showAlert('success', 'Vector database cleared successfully!');
+            } else {
+                showAlert('danger', 'Failed to clear database: ' + data.error);
+            }
+        })
+        .fail(function() {
+            showAlert('danger', 'Failed to clear vector database');
+        })
+        .always(function() {
+            $('#clearVectorDbBtn').prop('disabled', false).html('<i class="bi bi-database-x"></i> Clear Index');
+        });
+}
+
+function deleteAllUserData() {
+    const confirmation = prompt('Type "DELETE" to confirm permanent deletion of all your data:');
+    if (confirmation !== 'DELETE') {
+        return;
+    }
+    
+    $('#deleteAllDataBtn').prop('disabled', true).html('<div class="spinner-border spinner-border-sm" role="status"></div> Deleting...');
+    
+    $.post('/api/user/delete-all-data')
+        .done(function(data) {
+            if (data.success) {
+                showAlert('success', 'All data deleted successfully. You will be logged out.');
+                setTimeout(function() {
+                    window.location.href = '/auth/logout';
+                }, 2000);
+            } else {
+                showAlert('danger', 'Failed to delete data: ' + data.error);
+            }
+        })
+        .fail(function() {
+            showAlert('danger', 'Failed to delete user data');
+        })
+        .always(function() {
+            $('#deleteAllDataBtn').prop('disabled', false).html('<i class="bi bi-trash"></i> Delete All Data');
+        });
+}
+
+function loadUserStats() {
+    $.get('/api/email/stats')
+        .done(function(data) {
+            $('#totalEmailCount').text(data.total_emails || 0);
+        })
+        .fail(function() {
+            $('#totalEmailCount').text('Error loading');
+        });
+}
+
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('.container').prepend(alertHtml);
+    
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+}
+</script>
+{% endblock %}

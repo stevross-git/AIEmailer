@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error - AI Email Assistant{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="py-5">
+                <i class="bi bi-exclamation-octagon display-1 text-danger mb-4"></i>
+                <h1 class="display-4 mb-3">500</h1>
+                <h2 class="mb-3">Server Error</h2>
+                <p class="lead text-muted mb-4">
+                    Something went wrong on our end. We're working to fix this issue.
+                </p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-house"></i> Go Home
+                    </a>
+                    <button onclick="location.reload()" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-arrow-clockwise"></i> Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

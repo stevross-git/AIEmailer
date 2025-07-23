@@ -1,0 +1,41 @@
+# Core Flask dependencies
+Flask==3.0.0
+Flask-SocketIO==5.3.6
+Flask-SQLAlchemy==3.1.1
+
+# Database
+SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9
+
+# Authentication & Security
+cryptography==41.0.8
+PyJWT==2.8.0
+
+# HTTP & API
+requests==2.31.0
+urllib3==2.1.0
+
+# AI & ML (compatible versions)
+sentence-transformers==2.2.2
+chromadb==0.4.18
+numpy==1.24.3
+torch==2.1.2
+
+# HuggingFace (compatible version)
+huggingface-hub==0.19.4
+transformers==4.35.2
+
+# Utilities
+python-dotenv==1.0.0
+markdownify==0.11.6
+beautifulsoup4==4.12.2
+python-dateutil==2.8.2
+keyring==24.3.0
+email-validator==2.1.0
+
+# Development
+python-engineio==4.7.1
+python-socketio==5.10.0
+
+# System
+colorama==0.4.6

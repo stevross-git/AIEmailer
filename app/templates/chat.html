@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chat - AI Email Assistant{% endblock %}
+
+{% block extra_head %}
+<style>
+.chat-container {
+    height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.message {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.message.user {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    margin: 0 0.5rem;
+}
+
+.message.user .message-avatar {
+    background-color: #007bff;
+}
+
+.message.assistant .message-avatar {
+    background-color: #28a745;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    word-wrap: break-word;
+}
+
+.message.user .message-content {
+    background-color: #007bff;
+    color: white;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.message.assistant .message-content {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.chat-input-area {
+    border-top: 1px solid #dee2e6;
+    background-color: white;
+    padding: 1rem;
+}
+
+.typing-indicator {
+    display: none;
+    padding: 0.5rem 1rem;
+    background-color: #e9ecef;
+    border-radius: 1rem;
+    margin: 0.5rem;
+    max-width: 100px;
+}
+
+.typing-dots {
+    display: inline-block;
+    position: relative;
+}
+
+.typing-dots span {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    margin: 0 1px;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { 
+        transform: scale(0);
+        opacity: 0.5;
+    } 
+    40% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.suggestion-chip {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 1rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.suggestion-chip:hover {
+    background-color: #dee2e6;
+}
+
+.related-emails {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    border-left: 4px solid #007bff;
+}
+
+.email-card {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.email-card:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <!-- Chat Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Chat Sessions</h6>
+                    <button class="send-button" class="btn btn-sm btn-outline-primary" id="newChatBtn">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="chatSessions" class="list-group list-group-flush">
+                        <div class="text-center py-3">
+                            <small class="text-muted">Loading sessions...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="col-md-9 col-lg-10">
+            <div class="card chat-container">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="bi bi-robot text-success"></i> AI Email Assistant
+                        </h5>
+                        <small class="text-muted" id="connectionStatus">Connecting...</small>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="send-button" class="btn btn-outline-secondary" id="clearChatBtn" title="Clear Chat">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <button class="send-button" class="btn btn-outline-info" id="exportChatBtn" title="Export Chat">
+                            <i class="bi bi-download"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Area -->
+                <div class="chat-messages" id="chatMessages">
+                    <div class="text-center py-5">
+                        <i class="bi bi-chat-dots display-1 text-muted mb-3"></i>
+                        <h4 class="text-muted">Welcome to AI Email Assistant</h4>
+                        <p class="text-muted">Ask me anything about your emails or try one of the suggestions below:</p>
+                        
+                        <div class="suggestion-chips justify-content-center">
+                            <div class="suggestion-chip" onclick="sendSuggestion('Summarize my unread emails')">
+                                📧 Summarize unread emails
+                            </div>
+                            <div class="suggestion-chip" onclick="sendSuggestion('Find important emails from today')">
+                                ⭐ Important emails today
+                            </div>
+                            <div class="suggestion-chip" onclick="sendSuggestion('Help me draft a professional email')">
+                                ✍️ Draft an email
+                            </div>
+                            <div class="suggestion-chip" onclick="sendSuggestion('Show me my email statistics')">
+                                📊 Email statistics
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="message assistant">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input-area">
+                    <form id="chatForm">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="messageInput" 
+                                   placeholder="Ask me about your emails..." autocomplete="off">
+                            <button class="send-button" class="btn btn-primary" type="submit" id="sendBtn">
+                                <i class="bi bi-send"></i> Send
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let socket;
+let currentSessionId = null;
+let messageHistory = [];
+
+$(document).ready(function() {
+    // Initialize Socket.IO connection
+    initializeSocket();
+    
+    // Load chat sessions
+    loadChatSessions();
+    
+    // Handle form submission
+    $('#chatForm').submit(function(e) {
+        e.preventDefault();
+        sendMessage();
+    });
+    
+    // Handle enter key in input
+    $('#messageInput').keypress(function(e) {
+        if (e.which == 13 && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Handle new chat button
+    $('#newChatBtn').click(function() {
+        startNewChat();
+    });
+    
+    // Handle clear chat button
+    $('#clearChatBtn').click(function() {
+        if (confirm('Are you sure you want to clear this chat?')) {
+            clearChat();
+        }
+    });
+    
+    // Handle export chat button
+    $('#exportChatBtn').click(function() {
+        exportChat();
+    });
+    
+    // Check for pre-filled question from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const prefilledQuestion = urlParams.get('q');
+    if (prefilledQuestion) {
+        $('#messageInput').val(prefilledQuestion);
+        sendMessage();
+    }
+});
+
+function initializeSocket() {
+    socket = io();
+    
+    // Connection events
+    socket.on('connect', function() {
+        $('#connectionStatus').text('Connected').removeClass('text-danger').addClass('text-success');
+    });
+    
+    socket.on('disconnect', function() {
+        $('#connectionStatus').text('Disconnected').removeClass('text-success').addClass('text-danger');
+    });
+    
+    // Chat events
+    socket.on('message_received', function(data) {
+        hideTypingIndicator();
+        // Message acknowledged
+    });
+    
+    socket.on('ai_thinking', function(data) {
+        showTypingIndicator();
+    });
+    
+    socket.on('ai_response', function(data) {
+        hideTypingIndicator();
+        displayMessage('assistant', data.response, data);
+        enableInput();
+    });
+    
+    socket.on('ai_error', function(data) {
+        hideTypingIndicator();
+        displayMessage('assistant', 'Sorry, I encountered an error: ' + data.error, null, true);
+        enableInput();
+    });
+    
+    socket.on('error', function(data) {
+        hideTypingIndicator();
+        showAlert('danger', 'Connection error: ' + data.message);
+        enableInput();
+    });
+}
+
+function sendMessage() {
+    const message = $('#messageInput').val().trim();
+    if (!message) return;
+    
+    // Display user message
+    displayMessage('user', message);
+    
+    // Clear input and disable it
+    $('#messageInput').val('');
+    disableInput();
+    
+    // Generate session ID if not exists
+    if (!currentSessionId) {
+        currentSessionId = generateSessionId();
+    }
+    
+    // Send via Socket.IO for real-time response
+    socket.emit('chat_message', {
+        message: message,
+        session_id: currentSessionId,
+        context_type: 'general'
+    });
+    
+    // Add to message history
+    messageHistory.push({
+        role: 'user',
+        content: message,
+        timestamp: new Date()
+    });
+}
+
+function displayMessage(sender, content, data = null, isError = false) {
+    const messagesContainer = $('#chatMessages');
+    
+    // Remove welcome message if it exists
+    messagesContainer.find('.text-center.py-5').remove();
+    
+    let avatar = sender === 'user' ? '👤' : '🤖';
+    let senderClass = sender === 'user' ? 'user' : 'assistant';
+    
+    let messageHtml = `
+        <div class="message ${senderClass}">
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-content ${isError ? 'border-danger' : ''}">
+                ${formatMessageContent(content)}
+            </div>
+        </div>
+    `;
+    
+    messagesContainer.append(messageHtml);
+    
+    // Add related emails if provided
+    if (data && data.related_emails && data.related_emails.length > 0) {
+        let relatedEmailsHtml = '<div class="related-emails"><h6><i class="bi bi-link"></i> Related Emails:</h6>';
+        data.related_emails.forEach(function(email) {
+            relatedEmailsHtml += `
+                <div class="email-card" onclick="openEmail(${email.id})">
+                    <div class="d-flex justify-content-between">
+                        <strong>${email.subject}</strong>
+                        <small class="text-muted">${formatDate(email.received_date)}</small>
+                    </div>
+                    <small class="text-muted">From: ${email.sender_name || email.sender_email}</small>
+                </div>
+            `;
+        });
+        relatedEmailsHtml += '</div>';
+        messagesContainer.append(relatedEmailsHtml);
+    }
+    
+    // Add suggestions if provided
+    if (data && data.suggestions && data.suggestions.length > 0) {
+        let suggestionsHtml = '<div class="suggestion-chips">';
+        data.suggestions.forEach(function(suggestion) {
+            suggestionsHtml += `<div class="suggestion-chip" onclick="sendSuggestion('${suggestion}')">${suggestion}</div>`;
+        });
+        suggestionsHtml += '</div>';
+        messagesContainer.append(suggestionsHtml);
+    }
+    
+    // Scroll to bottom
+    messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+    
+    // Add to message history
+    if (sender === 'assistant') {
+        messageHistory.push({
+            role: 'assistant',
+            content: content,
+            timestamp: new Date(),
+            data: data
+        });
+    }
+}
+
+function formatMessageContent(content) {
+    // Basic markdown-like formatting
+    return content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+}
+
+function showTypingIndicator() {
+    $('#typingIndicator').show();
+    const messagesContainer = $('#chatMessages');
+    messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+}
+
+function hideTypingIndicator() {
+    $('#typingIndicator').hide();
+}
+
+function disableInput() {
+    $('#messageInput').prop('disabled', true);
+    $('#sendBtn').prop('disabled', true).html('<div class="spinner-border spinner-border-sm" role="status"></div>');
+}
+
+function enableInput() {
+    $('#messageInput').prop('disabled', false).focus();
+    $('#sendBtn').prop('disabled', false).html('<i class="bi bi-send"></i> Send');
+}
+
+function sendSuggestion(suggestion) {
+    $('#messageInput').val(suggestion);
+    sendMessage();
+}
+
+function generateSessionId() {
+    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+function loadChatSessions() {
+    $.get('/api/chat/sessions')
+        .done(function(data) {
+            let html = '';
+            if (data.sessions && data.sessions.length > 0) {
+                data.sessions.forEach(function(session) {
+                    html += `
+                        <div class="list-group-item list-group-item-action" data-session-id="${session.session_id}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${session.preview}</h6>
+                                <small>${formatDate(session.last_message)}</small>
+                            </div>
+                            <small class="text-muted">${session.message_count} messages</small>
+                        </div>
+                    `;
+                });
+            } else {
+                html = '<div class="text-center py-3"><small class="text-muted">No previous chats</small></div>';
+            }
+            $('#chatSessions').html(html);
+            
+            // Handle session click
+            $('.list-group-item[data-session-id]').click(function() {
+                loadChatSession($(this).data('session-id'));
+                $('.list-group-item').removeClass('active');
+                $(this).addClass('active');
+            });
+        })
+        .fail(function() {
+            $('#chatSessions').html('<div class="text-center py-3"><small class="text-muted text-danger">Failed to load sessions</small></div>');
+        });
+}
+
+function loadChatSession(sessionId) {
+    currentSessionId = sessionId;
+    
+    $.get(`/api/chat/conversation/${sessionId}`)
+        .done(function(data) {
+            $('#chatMessages').empty();
+            messageHistory = [];
+            
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(function(msg) {
+                    if (msg.message) {
+                        displayMessage('user', msg.message);
+                    }
+                    if (msg.response) {
+                        displayMessage('assistant', msg.response);
+                    }
+                });
+            }
+        })
+        .fail(function() {
+            showAlert('danger', 'Failed to load chat session');
+        });
+}
+
+function startNewChat() {
+    currentSessionId = null;
+    messageHistory = [];
+    $('#chatMessages').html(`
+        <div class="text-center py-5">
+            <i class="bi bi-chat-dots display-1 text-muted mb-3"></i>
+            <h4 class="text-muted">New Chat Started</h4>
+            <p class="text-muted">How can I help you with your emails today?</p>
+        </div>
+    `);
+    $('.list-group-item').removeClass('active');
+    $('#messageInput').focus();
+}
+
+function clearChat() {
+    startNewChat();
+}
+
+function exportChat() {
+    if (messageHistory.length === 0) {
+        showAlert('warning', 'No messages to export');
+        return;
+    }
+    
+    let exportText = `AI Email Assistant Chat Export\nDate: ${new Date().toISOString()}\n\n`;
+    
+    messageHistory.forEach(function(msg) {
+        exportText += `[${msg.timestamp.toLocaleString()}] ${msg.role.toUpperCase()}: ${msg.content}\n\n`;
+    });
+    
+    // Create and download file
+    const blob = new Blob([exportText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat_export_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function openEmail(emailId) {
+    // Open email in new tab or modal
+    window.open(`/emails/${emailId}`, '_blank');
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function showAlert(type, message) {
+    let alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button class="send-button" type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('.container-fluid').prepend(alertHtml);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+}
+</script>
+{% endblock %}

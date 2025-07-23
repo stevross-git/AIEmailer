@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Working Email Send Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #28a745; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input, textarea, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            box-sizing: border-box;
+        }
+        textarea { height: 100px; }
+        button { 
+            background: #28a745; 
+            color: white; 
+            padding: 15px 30px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover { background: #218838; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .result { 
+            margin-top: 20px; 
+            padding: 15px; 
+            border-radius: 4px; 
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #e7f3ff; color: #0c5460; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Fixed Email Send Test</h1>
+        
+        <div class="info">
+            <strong>🔧 Field Names Fixed!</strong><br>
+            This test uses the correct field names that your backend expects.
+            Based on the debug logs, the issue was field name mismatch.
+        </div>
+        
+        <form id="emailForm">
+            <div class="form-group">
+                <label for="to">📧 To:</label>
+                <input type="email" id="to" name="to" required placeholder="recipient@example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="cc">📄 CC (Optional):</label>
+                <input type="email" id="cc" name="cc" placeholder="cc@example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="bcc">🔒 BCC (Optional):</label>
+                <input type="email" id="bcc" name="bcc" placeholder="bcc@example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="subject">📝 Subject:</label>
+                <input type="text" id="subject" name="subject" required placeholder="Email Subject">
+            </div>
+            
+            <div class="form-group">
+                <label for="body">✉️ Message:</label>
+                <textarea id="body" name="body" required placeholder="Email message..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="importance">⭐ Importance:</label>
+                <select id="importance" name="importance">
+                    <option value="low">Low</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="sendBtn">🚀 Send Real Email</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('emailForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const sendBtn = document.getElementById('sendBtn');
+            const resultDiv = document.getElementById('result');
+            
+            sendBtn.disabled = true;
+            sendBtn.textContent = '📤 Sending...';
+            resultDiv.innerHTML = '<div class="result">⏳ Sending email...</div>';
+            
+            const formData = new FormData(this);
+            const data = {
+                to: formData.get('to'),
+                subject: formData.get('subject'),
+                body: formData.get('body'),
+                importance: formData.get('importance')
+            };
+            
+            // Add optional fields if present
+            if (formData.get('cc')) data.cc = formData.get('cc');
+            if (formData.get('bcc')) data.bcc = formData.get('bcc');
+            
+            console.log('Sending data with correct field names:', data);
+            
+            fetch('/api/email/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response:', data);
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ <strong>Email Sent Successfully!</strong><br>
+                            📧 To: ${data.details.to}<br>
+                            📝 Subject: "${data.details.subject}"<br>
+                            📨 From: ${data.details.from}<br>
+                            ⏰ Sent: ${new Date(data.details.sent_at).toLocaleString()}
+                        </div>
+                    `;
+                    // Clear form on success
+                    document.getElementById('emailForm').reset();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            ❌ <strong>Send Failed:</strong> ${data.error}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ <strong>Network Error:</strong> ${error.message}
+                    </div>
+                `;
+            })
+            .finally(() => {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '🚀 Send Real Email';
+            });
+        });
+    </script>
+</body>
+</html>
