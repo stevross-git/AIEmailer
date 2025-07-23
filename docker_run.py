@@ -1,54 +1,41 @@
 #!/usr/bin/env python3
 """
-Docker-based Application Runner
+Simple Docker Run - Fixed Version
 """
 import os
 import sys
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 def main():
-    """Main application entry point with Docker database"""
+    """Start the application"""
+    print("Starting AI Email Assistant")
+    print("=" * 27)
+    
     try:
-        # Set environment to use Docker config
+        # Set environment
         os.environ['USE_DOCKER_CONFIG'] = 'true'
         
-        from app import create_app, socketio
+        # Import app
+        from app import app
         
-        # Create Flask app
-        app = create_app()
-        
-        # Get configuration
-        debug = os.getenv('FLASK_ENV') == 'development'
-        port = int(os.getenv('PORT', 5000))
-        host = os.getenv('HOST', '127.0.0.1')
-        
-        print(f"🚀 Starting AI Email Assistant (Docker Database Mode)")
-        print(f"📍 URL: http://{host}:{port}")
-        print(f"🔧 Debug: {debug}")
-        print(f"🐳 Database: PostgreSQL (Docker)")
-        print(f"🔄 Cache: Redis (Docker)")
-        print(f"🔍 Vector DB: ChromaDB (Docker)")
-        print(f"🤖 Ollama: {os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}")
+        print("App imported successfully")
+        print()
+        print("AI Email Assistant Ready!")
+        print("=" * 26) 
+        print("Visit: http://localhost:5000")
         print()
         
-        # Run the application
-        socketio.run(
-            app,
-            host=host,
-            port=port,
-            debug=debug,
-            allow_unsafe_werkzeug=True
+        # Start the app
+        app.run(
+            host='0.0.0.0',
+            port=5000,
+            debug=True,
+            use_reloader=False
         )
         
     except Exception as e:
-        print(f"❌ Error starting application: {e}")
-        print()
-        print("💡 Make sure Docker database services are running:")
-        print("   python start_docker_db.py")
-        sys.exit(1)
+        print(f"Error starting application: {e}")
+        import traceback
+        traceback.print_exc()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

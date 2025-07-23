@@ -1,114 +1,215 @@
 """
-Chat routes for AI Email Assistant - Ultra Simple Version
+Chat Message Model for AI Email Assistant
 """
-import uuid
 from datetime import datetime
-from flask import Blueprint, request, jsonify, session, current_app
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Index
+from app import db
 
-chat_bp = Blueprint('chat', __name__, url_prefix='/api/chat')
+class ChatMessage(db.Model):
+    """Chat message model for storing conversation history"""
+    
+    __tablename__ = 'chat_messages'
+    
+    id = Column(Integer, primary_key=True)
+    
+    # User relationship
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    
+    # Message content
+    message = Column(Text, nullable=False)
+    response = Column(Text)
+    
+    # Message metadata
+    message_type = Column(String(20), default='query')  # query, command, system
+    context_type = Column(String(50))  # email, thread, general, search
+    context_data = Column(JSON)  # Additional context information
+    
+    # AI model information
+    model_used = Column(String(100))  # Which AI model was used
+    response_time_ms = Column(Integer)  # Response time in milliseconds
+    token_count = Column(Integer)  # Number of tokens used
+    
+    # Message status
+    is_processed = Column(Boolean, default=False)
+    has_error = Column(Boolean, default=False)
+    error_message = Column(Text)
+    
+    # Ratings and feedback
+    user_rating = Column(Integer)  # 1-5 rating from user
+    user_feedback = Column(Text)
+    
+    # Related entities
+    related_email_ids = Column(JSON)  # List of email IDs referenced
+    related_thread_ids = Column(JSON)  # List of thread IDs referenced
+    
+    # Session information
+    session_id = Column(String(255), index=True)
+    conversation_turn = Column(Integer, default=1)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    processed_at = Column(DateTime)
+    
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+    
+    def to_dict(self, include_context=False):
+        """Convert chat message object to dictionary"""
+        data = {
+            'id': self.id,
+            'user_id': self.user_id,
+            'message': self.message,
+            'response': self.response,
+            'message_type': self.message_type,
+            'context_type': self.context_type,
+            'model_used': self.model_used,
+            'response_time_ms': self.response_time_ms,
+            'token_count': self.token_count,
+            'is_processed': self.is_processed,
+            'has_error': self.has_error,
+            'error_message': self.error_message,
+            'user_rating': self.user_rating,
+            'user_feedback': self.user_feedback,
+            'session_id': self.session_id,
+            'conversation_turn': self.conversation_turn,
+            'created_at': self.created_at.isoformat(),
+            'processed_at': self.processed_at.isoformat() if self.processed_at else None
+        }
+        
+        if include_context:
+            data['context_data'] = self.context_data or {}
+            data['related_email_ids'] = self.related_email_ids or []
+            data['related_thread_ids'] = self.related_thread_ids or []
+        
+        return data
+    
+    def update_response(self, response, model_used=None, response_time_ms=None, token_count=None):
+        """Update message with AI response"""
+        self.response = response
+        self.is_processed = True
+        self.processed_at = datetime.utcnow()
+        
+        if model_used:
+            self.model_used = model_used
+        if response_time_ms:
+            self.response_time_ms = response_time_ms
+        if token_count:
+            self.token_count = token_count
+        
+        db.session.commit()
+    
+    def set_error(self, error_message):
+        """Set error state for message"""
+        self.has_error = True
+        self.error_message = error_message
+        self.is_processed = True
+        self.processed_at = datetime.utcnow()
+        db.session.commit()
+    
+    def add_rating(self, rating, feedback=None):
+        """Add user rating and feedback"""
+        self.user_rating = rating
+        if feedback:
+            self.user_feedback = feedback
+        db.session.commit()
+    
+    def add_related_emails(self, email_ids):
+        """Add related email IDs"""
+        if not isinstance(email_ids, list):
+            email_ids = [email_ids]
+        
+        current_ids = self.related_email_ids or []
+        self.related_email_ids = list(set(current_ids + email_ids))
+        db.session.commit()
+    
+    def add_related_threads(self, thread_ids):
+        """Add related thread IDs"""
+        if not isinstance(thread_ids, list):
+            thread_ids = [thread_ids]
+        
+        current_ids = self.related_thread_ids or []
+        self.related_thread_ids = list(set(current_ids + thread_ids))
+        db.session.commit()
+    
+    @staticmethod
+    def get_user_conversation(user_id, session_id=None, limit=50):
+        """Get conversation history for a user"""
+        query = ChatMessage.query.filter_by(user_id=user_id)
+        
+        if session_id:
+            query = query.filter_by(session_id=session_id)
+        
+        return query.order_by(db.desc(ChatMessage.created_at)).limit(limit).all()
+    
+    @staticmethod
+    def get_recent_messages(user_id, limit=10):
+        """Get recent messages for a user"""
+        return ChatMessage.query.filter_by(
+            user_id=user_id,
+            is_processed=True,
+            has_error=False
+        ).order_by(db.desc(ChatMessage.created_at)).limit(limit).all()
+    
+    @staticmethod
+    def get_session_messages(session_id):
+        """Get all messages for a specific session"""
+        return ChatMessage.query.filter_by(session_id=session_id).order_by(
+            ChatMessage.conversation_turn
+        ).all()
+    
+    @staticmethod
+    def get_unprocessed_messages(limit=100):
+        """Get unprocessed messages for background processing"""
+        return ChatMessage.query.filter_by(
+            is_processed=False,
+            has_error=False
+        ).order_by(ChatMessage.created_at).limit(limit).all()
+    
+    @staticmethod
+    def get_user_stats(user_id):
+        """Get chat statistics for a user"""
+        total_messages = ChatMessage.query.filter_by(user_id=user_id).count()
+        processed_messages = ChatMessage.query.filter_by(
+            user_id=user_id, 
+            is_processed=True
+        ).count()
+        error_messages = ChatMessage.query.filter_by(
+            user_id=user_id, 
+            has_error=True
+        ).count()
+        
+        # Average response time
+        avg_response_time = db.session.query(
+            db.func.avg(ChatMessage.response_time_ms)
+        ).filter_by(
+            user_id=user_id,
+            is_processed=True,
+            has_error=False
+        ).scalar()
+        
+        # Average rating
+        avg_rating = db.session.query(
+            db.func.avg(ChatMessage.user_rating)
+        ).filter_by(user_id=user_id).filter(
+            ChatMessage.user_rating.isnot(None)
+        ).scalar()
+        
+        return {
+            'total_messages': total_messages,
+            'processed_messages': processed_messages,
+            'error_messages': error_messages,
+            'success_rate': (processed_messages - error_messages) / max(processed_messages, 1) * 100,
+            'avg_response_time_ms': int(avg_response_time) if avg_response_time else 0,
+            'avg_rating': round(avg_rating, 2) if avg_rating else None
+        }
+    
+    def __repr__(self):
+        return f'<ChatMessage {self.id}: {self.message[:50]}...>'
 
-@chat_bp.route('/message', methods=['POST'])
-def chat_message():
-    """Handle chat message - no database dependencies"""
-    try:
-        # Check authentication
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({'success': False, 'error': 'Please sign in first'}), 401
-        
-        # Get message data
-        if request.is_json:
-            data = request.get_json() or {}
-        else:
-            data = request.form.to_dict()
-        
-        message = data.get('message', '').strip()
-        if not message:
-            return jsonify({'success': False, 'error': 'Message cannot be empty'}), 400
-        
-        current_app.logger.info(f"Chat message from user {user_id}: {message[:50]}...")
-        
-        # Generate response based on keywords
-        message_lower = message.lower()
-        
-        # Email-related responses
-        if any(word in message_lower for word in ['hello', 'hi', 'hey', 'start']):
-            response = "Hello! I'm your AI email assistant. I can help you manage your Microsoft 365 emails. I can analyze your inbox, summarize messages, find urgent emails, and help you stay organized. What would you like me to help you with?"
-        
-        elif any(word in message_lower for word in ['email', 'emails', 'inbox', 'messages']):
-            response = "I can help you with your emails! I have access to your Microsoft 365 inbox and can:\n\n• Analyze and categorize your emails\n• Find urgent or high-priority messages\n• Summarize email content\n• Help you prioritize your tasks\n• Search for specific emails\n\nWhat specific email task would you like assistance with?"
-        
-        elif any(word in message_lower for word in ['urgent', 'priority', 'important']):
-            response = "I'll help you identify urgent and high-priority emails. I can analyze your current inbox for:\n\n• Emails with urgent keywords or time-sensitive content\n• Messages from important contacts\n• Emails requiring immediate action\n• Time-sensitive deadlines\n\nWould you like me to analyze your current inbox for urgent items?"
-        
-        elif any(word in message_lower for word in ['summary', 'summarize']):
-            response = "I can provide intelligent summaries of your emails. I can summarize:\n\n• All unread messages\n• Emails from today or this week\n• Messages from specific senders\n• Emails about particular topics\n• Important action items\n\nWhat would you like me to summarize for you?"
-        
-        elif any(word in message_lower for word in ['unread']):
-            response = "I can help you manage your unread emails efficiently. I can:\n\n• Show you a prioritized list of unread messages\n• Identify which unread emails are most important\n• Categorize unread emails by topic or sender\n• Suggest which emails to read first\n\nWould you like me to analyze your unread emails?"
-        
-        elif any(word in message_lower for word in ['search', 'find']):
-            response = "I can help you search through your emails quickly. I can find:\n\n• Emails from specific people\n• Messages about certain topics\n• Emails with attachments\n• Messages from particular time periods\n• Emails containing specific keywords\n\nWhat would you like me to search for in your emails?"
-        
-        elif any(word in message_lower for word in ['send', 'compose', 'write']):
-            response = "I can assist you with composing and sending emails through your Microsoft 365 account. I can help with:\n\n• Drafting professional emails\n• Suggesting improvements to your writing\n• Organizing your thoughts and structure\n• Ensuring proper tone and formatting\n\nWhat kind of email do you need help composing?"
-        
-        elif any(word in message_lower for word in ['today', 'recent']):
-            response = "I can show you what's happening with your emails today. Let me help you with:\n\n• Emails received today\n• Important messages from recent days\n• Today's priority tasks from your inbox\n• Recent email activity summary\n\nWould you like me to analyze your recent email activity?"
-        
-        elif any(word in message_lower for word in ['help', 'what can you do']):
-            response = "I'm your AI email assistant with access to your Microsoft 365 emails. Here's what I can do:\n\n📧 **Email Management:**\n• Analyze and categorize your inbox\n• Find urgent/important emails\n• Summarize email content\n\n🔍 **Email Search:**\n• Search by sender, topic, or keywords\n• Find emails with attachments\n• Locate specific time periods\n\n✉️ **Email Composition:**\n• Help draft professional emails\n• Suggest improvements to your writing\n\n📊 **Email Analytics:**\n• Identify patterns in your communication\n• Prioritize your daily email tasks\n\nJust ask me about your emails, and I'll help you stay organized and productive!"
-        
-        else:
-            response = f"I understand you're asking about: '{message}'. \n\nAs your AI email assistant, I'm here to help you manage your Microsoft 365 emails more effectively. I can analyze your inbox, find important messages, help you prioritize tasks, and much more.\n\nCould you tell me more specifically what you'd like me to help you with regarding your emails? For example:\n• 'Show me urgent emails'\n• 'Summarize my unread messages'\n• 'Help me find emails about [topic]'"
-        
-        return jsonify({
-            'success': True,
-            'response': response,
-            'session_id': str(uuid.uuid4()),
-            'timestamp': datetime.utcnow().isoformat()
-        })
-        
-    except Exception as e:
-        current_app.logger.error(f"Chat error: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'I encountered an error processing your message. Please try again.'
-        }), 500
 
-@chat_bp.route('/suggestions', methods=['GET'])
-def get_chat_suggestions():
-    """Get suggested chat prompts"""
-    try:
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({'success': False, 'error': 'Please sign in first'}), 401
-        
-        suggestions = [
-            "Show me my urgent emails",
-            "Summarize my unread messages",
-            "What emails need my attention today?",
-            "Help me prioritize my inbox",
-            "Find emails with attachments",
-            "Show me emails from this week",
-            "Help me compose a professional email"
-        ]
-        
-        return jsonify({
-            'success': True,
-            'suggestions': suggestions
-        })
-        
-    except Exception as e:
-        current_app.logger.error(f"Suggestions error: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@chat_bp.route('/sessions', methods=['GET'])
-def get_chat_sessions():
-    """Get chat sessions - simplified"""
-    return jsonify({'success': True, 'sessions': []})
-
-@chat_bp.route('/stats', methods=['GET'])  
-def get_chat_stats():
-    """Get chat statistics - simplified"""
-    return jsonify({'success': True, 'stats': {'total_sessions': 0, 'total_messages': 0}})
+# Create indexes for better query performance
+Index('idx_chat_messages_user_session', ChatMessage.user_id, ChatMessage.session_id)
+Index('idx_chat_messages_user_created', ChatMessage.user_id, ChatMessage.created_at.desc())
+Index('idx_chat_messages_processed', ChatMessage.is_processed, ChatMessage.has_error)

@@ -1,0 +1,97 @@
+"""
+AI Email Assistant Flask Application
+"""
+import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+# Create SQLAlchemy instance
+db = SQLAlchemy()
+
+def create_app():
+    """Create and configure Flask application"""
+    app = Flask(__name__)
+    
+    # Load configuration
+    try:
+        if os.environ.get('USE_DOCKER_CONFIG') == 'true':
+            print("Using Docker configuration")
+            from app.config.docker_config import DevelopmentConfig
+            app.config.from_object(DevelopmentConfig)
+        else:
+            print("Using local configuration")
+            # Try docker config as fallback
+            from app.config.docker_config import DevelopmentConfig
+            app.config.from_object(DevelopmentConfig)
+    except ImportError:
+        print("Config import failed - using minimal config")
+        # Minimal fallback config
+        app.config.update({
+            'SECRET_KEY': 'dev-secret-key',
+            'SQLALCHEMY_DATABASE_URI': 'sqlite:///instance/app.db',
+            'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+            'DEBUG': True
+        })
+    
+    # Create instance directory
+    os.makedirs('instance', exist_ok=True)
+    
+    # Initialize database
+    db.init_app(app)
+    
+    # Initialize extensions
+    try:
+        from flask_cors import CORS
+        from flask_session import Session
+        
+        CORS(app, supports_credentials=True)
+        Session(app)
+    except ImportError:
+        print("Extension import warning - continuing without CORS/Session")
+    
+    # Import models and create tables within app context
+    with app.app_context():
+        try:
+            from app.models.user import User
+            from app.models.email import Email
+            from app.models.chat import ChatMessage
+            
+            db.create_all()
+            print("Database tables created")
+        except Exception as e:
+            print(f"Database setup error: {e}")
+    
+    # Register blueprints with error handling
+    blueprints = [
+        ('app.routes.main', 'main_bp', ''),
+        ('app.routes.auth', 'auth_bp', '/auth'),
+        ('app.routes.email', 'email_bp', '/api/email'),
+        ('app.routes.chat', 'chat_bp', '/api/chat')
+    ]
+    
+    for module_name, blueprint_name, url_prefix in blueprints:
+        try:
+            module = __import__(module_name, fromlist=[blueprint_name])
+            blueprint = getattr(module, blueprint_name)
+            if url_prefix:
+                app.register_blueprint(blueprint, url_prefix=url_prefix)
+            else:
+                app.register_blueprint(blueprint)
+            print(f"{blueprint_name} registered")
+        except Exception as e:
+            print(f"{blueprint_name} error: {e}")
+    
+    # Error handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        return {"error": "Not found"}, 404
+    
+    @app.errorhandler(500)
+    def server_error(error):
+        return {"error": "Server error"}, 500
+    
+    print("Flask app created successfully")
+    return app
+
+# Export for module imports
+__all__ = ['create_app', 'db']

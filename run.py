@@ -12,7 +12,7 @@ load_dotenv()
 # Add the app directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
 
-from app import create_app, socketio
+from app import create_app
 
 def main():
     """Main application entry point"""

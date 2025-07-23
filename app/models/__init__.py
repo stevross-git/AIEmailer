@@ -1,14 +1,12 @@
 """
-Models package for AI Email Assistant
+Models package initialization
+Import models in the correct order to avoid circular dependencies
 """
-from flask_sqlalchemy import SQLAlchemy
 
-# Initialize SQLAlchemy instance
-db = SQLAlchemy()
+# Import base models first
+from app.models.user import User
+from app.models.email import Email
+from app.models.chat import ChatMessage
 
-# Import models without relationships to avoid circular references
-from .user import User
-from .email import Email
-from .chat import ChatMessage
-
-__all__ = ['db', 'User', 'Email', 'ChatMessage']
+# Make all models available at package level
+__all__ = ['User', 'Email', 'ChatMessage']
