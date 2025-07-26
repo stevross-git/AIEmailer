@@ -99,8 +99,24 @@ def create_app():
     
     try:
         from flask_session import Session
-        Session(app)
-        print("✅ Session initialized")
+        session_ext = Session()
+        session_ext.init_app(app)
+
+        # Work around Flask-Session byte/string issue with newer Werkzeug
+        try:
+            original_save = app.session_interface.save_session
+
+            def patched_save_session(app, session, response):
+                sid = getattr(session, "sid", None)
+                if isinstance(sid, bytes):
+                    session.sid = sid.decode("utf-8")
+                return original_save(app, session, response)
+
+            app.session_interface.save_session = patched_save_session
+            print("✅ Session initialized (patched)")
+        except Exception as patch_error:
+            print(f"⚠️ Session patch failed: {patch_error}")
+            print("✅ Session initialized")
     except ImportError:
         print("⚠️ Flask-Session not available")
     
