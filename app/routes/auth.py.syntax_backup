@@ -382,7 +382,13 @@ def ensure_database_connection():
         
         # Test database connection
         with current_app.app_context():
-            db.engine.execute('SELECT 1')
+            # Test database connection (SQLAlchemy 2.0 compatible)
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(db.text('SELECT 1'))
+        except Exception:
+            # Fallback for older SQLAlchemy versions
+            db.engine.execute(db.text('SELECT 1'))
             
     except Exception as e:
         current_app.logger.error(f"Database connection error: {e}")

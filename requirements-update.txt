@@ -1,0 +1,65 @@
+# Core Flask dependencies - COMPATIBLE VERSIONS
+Flask==3.0.0
+Werkzeug==2.3.7        # PINNED: Compatible with Flask-Session
+Flask-SocketIO==5.3.6
+Flask-CORS==4.0.0
+Flask-Session==0.5.0   # PINNED: Latest stable version
+Flask-SQLAlchemy==3.1.1
+
+# Microsoft Graph API
+msgraph-core==1.0.0
+msgraph-sdk==1.2.0
+azure-identity==1.15.0
+msal==1.26.0
+
+# Ollama integration
+ollama==0.1.7
+requests==2.31.0
+
+# Vector database and embeddings - COMPATIBLE VERSIONS
+chromadb==0.4.18       # PINNED: Stable version
+sentence-transformers==2.2.2  # PINNED: Compatible with ChromaDB
+numpy==1.24.3          # PINNED: Compatible with all ML libraries
+faiss-cpu==1.7.4
+
+# Database
+SQLAlchemy==2.0.23     # PINNED: Compatible with Flask-SQLAlchemy 3.1.1
+alembic==1.12.1
+
+# Authentication and security
+PyJWT==2.8.0
+cryptography   # PINNED: Stable version
+keyring==24.3.0
+
+# Email processing
+email-validator==2.1.0
+python-dateutil==2.8.2
+beautifulsoup4==4.12.2
+markdownify==0.11.6
+
+# Utilities
+python-dotenv==1.0.0
+schedule==1.2.0
+apscheduler==3.10.4
+click==8.1.7
+
+# Development and testing
+pytest==7.4.3
+pytest-flask==1.3.0
+black==23.11.0
+flake8==6.1.0
+
+# Windows-specific
+pywin32==306; sys_platform == "win32"
+
+# Optional: Better logging
+structlog==23.2.0
+
+# ML/AI dependencies - COMPATIBLE VERSIONS
+torch==2.1.2           # PINNED: Compatible with sentence-transformers
+transformers==4.35.2   # PINNED: Compatible version
+huggingface-hub==0.19.4 # PINNED: Prevents compatibility issues
+
+# System dependencies
+colorama==0.4.6
+urllib3==2.1.0

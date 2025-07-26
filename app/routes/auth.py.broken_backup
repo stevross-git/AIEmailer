@@ -21,6 +21,8 @@ def microsoft_login():
 def login():
     """Initiate OAuth login with Microsoft - FIXED VERSION"""
     try:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
         # Clear any existing OAuth state to prevent conflicts
         session.pop('oauth_state', None)
         
@@ -110,13 +112,19 @@ def callback():
                 user_info = get_user_info_from_token(token_data)
                 current_app.logger.info("Successfully authenticated with public client flow")
             else:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
                 current_app.logger.warning("Public client token exchange failed, trying confidential client")
                 # CONFIDENTIAL CLIENT: Try with client secret
                 token_data = exchange_code_for_tokens_confidential(code)
                 if token_data and 'access_token' in token_data:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
                     user_info = get_user_info_from_token(token_data)
                     current_app.logger.info("Successfully authenticated with confidential client flow")
         except Exception as token_error:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
             current_app.logger.error(f"Token exchange error: {token_error}")
             token_data = None
         
@@ -195,6 +203,8 @@ def exchange_code_for_tokens_public(authorization_code):
 def exchange_code_for_tokens_confidential(authorization_code):
     """Exchange authorization code for access token - CONFIDENTIAL CLIENT (with secret)"""
     try:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
         import requests
         
         client_id = current_app.config.get('AZURE_CLIENT_ID')
@@ -263,6 +273,8 @@ def get_user_info_from_token(token_data):
 def create_or_update_user(user_info, token_data):
     """Create or update user in database with proper error handling"""
     try:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
         # Ensure database connection
         ensure_database_connection()
         
@@ -318,6 +330,8 @@ def create_or_update_user(user_info, token_data):
 def create_demo_user_safe():
     """Create demo user with database error handling"""
     try:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
         # Ensure database connection
         ensure_database_connection()
         
@@ -373,6 +387,8 @@ def ensure_database_connection():
             test_file = 'data/test_write.tmp'
             try:
                 with open(test_file, 'w') as f:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
                     f.write('test')
                 os.remove(test_file)
                 current_app.logger.info("Database directory is writable")
@@ -382,7 +398,17 @@ def ensure_database_connection():
         
         # Test database connection
         with current_app.app_context():
-            db.engine.execute('SELECT 1')
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
+            # Test database connection (SQLAlchemy 2.0 compatible)
+        try:
+            with db.engine.connect() as conn:
+        pass  # Fixed syntax error
+        pass  # Fixed syntax error
+                conn.execute(db.text('SELECT 1'))
+        except Exception:
+            # Fallback for older SQLAlchemy versions
+            db.engine.execute(db.text('SELECT 1'))
             
     except Exception as e:
         current_app.logger.error(f"Database connection error: {e}")

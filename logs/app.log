@@ -2407,3 +2407,214 @@
 2025-07-26 15:47:13,466 - werkzeug - INFO -  * Debugger PIN: 153-759-140
 2025-07-26 15:47:16,311 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:47:16] "[33mGET /auth/microsoft HTTP/1.1[0m" 404 -
 2025-07-26 15:48:32,192 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:48:32] "[33mGET /auth/microsoft HTTP/1.1[0m" 404 -
+2025-07-26 15:50:55,976 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-07-26 15:50:55,977 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-26 15:50:55,977 - werkzeug - INFO -  * Restarting with stat
+2025-07-26 15:50:57,384 - werkzeug - WARNING -  * Debugger is active!
+2025-07-26 15:50:57,394 - werkzeug - INFO -  * Debugger PIN: 153-759-140
+2025-07-26 15:51:04,952 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:04] "[32mGET /auth/microsoft HTTP/1.1[0m" 302 -
+2025-07-26 15:51:04,968 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 15:51:05,013 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:05] "[35m[1mGET /auth/login HTTP/1.1[0m" 500 -
+2025-07-26 15:51:05,401 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:05] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-07-26 15:51:05,491 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:05] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-07-26 15:51:05,908 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:05] "GET /auth/login?__debugger__=yes&cmd=resource&f=console.png&s=9FvVDGK71Jq9lHAOzWci HTTP/1.1" 200 -
+2025-07-26 15:51:09,766 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:09] "[32mGET /auth/microsoft HTTP/1.1[0m" 302 -
+2025-07-26 15:51:09,786 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 15:51:09,820 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:09] "[35m[1mGET /auth/login HTTP/1.1[0m" 500 -
+2025-07-26 15:51:09,912 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:09] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-07-26 15:51:09,924 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:09] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-07-26 15:51:10,552 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 15:51:10] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=console.png&s=9FvVDGK71Jq9lHAOzWci HTTP/1.1[0m" 304 -
+2025-07-26 16:02:05,885 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:05] "GET / HTTP/1.1" 200 -
+2025-07-26 16:02:06,098 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:06] "GET / HTTP/1.1" 200 -
+2025-07-26 16:02:06,224 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:06] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+2025-07-26 16:02:06,487 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:06] "[36mGET /static/js/main.js HTTP/1.1[0m" 304 -
+2025-07-26 16:02:07,595 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:07] "GET /auth/status HTTP/1.1" 200 -
+2025-07-26 16:02:09,991 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:09] "[32mGET /auth/microsoft HTTP/1.1[0m" 302 -
+2025-07-26 16:02:10,145 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:02:10,164 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:10] "[35m[1mGET /auth/login HTTP/1.1[0m" 500 -
+2025-07-26 16:02:10,231 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:10] "GET /auth/login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-07-26 16:02:10,528 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:10] "GET /auth/login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-07-26 16:02:10,696 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:10] "GET /auth/login?__debugger__=yes&cmd=resource&f=console.png&s=9FvVDGK71Jq9lHAOzWci HTTP/1.1" 200 -
+2025-07-26 16:02:11,400 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:11] "GET /auth/login?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-07-26 16:02:14,503 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:02:14,527 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:14] "[35m[1mGET /auth/login HTTP/1.1[0m" 500 -
+2025-07-26 16:02:14,810 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:14] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-07-26 16:02:14,917 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:14] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-07-26 16:02:15,342 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:15] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=console.png&s=9FvVDGK71Jq9lHAOzWci HTTP/1.1[0m" 304 -
+2025-07-26 16:02:19,072 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:02:19,105 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:19] "[35m[1mGET /auth/login HTTP/1.1[0m" 500 -
+2025-07-26 16:02:19,377 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:19] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-07-26 16:02:19,503 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:19] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-07-26 16:02:19,886 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:02:19] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=console.png&s=9FvVDGK71Jq9lHAOzWci HTTP/1.1[0m" 304 -
+2025-07-26 16:03:51,001 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-07-26 16:03:51,002 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-26 16:03:51,003 - werkzeug - INFO -  * Restarting with stat
+2025-07-26 16:03:52,414 - werkzeug - WARNING -  * Debugger is active!
+2025-07-26 16:03:52,424 - werkzeug - INFO -  * Debugger PIN: 153-759-140
+2025-07-26 16:03:56,620 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:03:56] "[32mGET /auth/microsoft HTTP/1.1[0m" 302 -
+2025-07-26 16:03:56,626 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:03:56,665 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:03:56] "[35m[1mGET /auth/login HTTP/1.1[0m" 500 -
+2025-07-26 16:03:57,023 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:03:57] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-07-26 16:03:57,088 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:03:57] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-07-26 16:03:57,694 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:03:57] "GET /auth/login?__debugger__=yes&cmd=resource&f=console.png&s=pHq0NwBCIv5osoZLHIfS HTTP/1.1" 200 -
+2025-07-26 16:10:46,310 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:10:46,377 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:46] "[35m[1mGET /auth/login HTTP/1.1[0m" 500 -
+2025-07-26 16:10:46,463 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:46] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-07-26 16:10:46,465 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:46] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-07-26 16:10:47,568 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:47] "GET /auth/login?__debugger__=yes&cmd=resource&f=console.png&s=pHq0NwBCIv5osoZLHIfS HTTP/1.1" 200 -
+2025-07-26 16:10:51,569 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:51] "[32mGET /auth/microsoft HTTP/1.1[0m" 302 -
+2025-07-26 16:10:51,594 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:10:51,632 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:51] "[35m[1mGET /auth/login HTTP/1.1[0m" 500 -
+2025-07-26 16:10:51,731 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:51] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-07-26 16:10:51,751 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:51] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-07-26 16:10:52,233 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:52] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=console.png&s=pHq0NwBCIv5osoZLHIfS HTTP/1.1[0m" 304 -
+2025-07-26 16:10:52,846 - werkzeug - INFO - 127.0.0.1 - - [26/Jul/2025 16:10:52] "[36mGET /auth/login?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-07-26 16:14:02,534 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:14:08,735 - app - ERROR - OAuth error: invalid_request
+2025-07-26 16:21:21,474 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:21:27,156 - app - ERROR - OAuth error: invalid_request
+2025-07-26 16:24:07,074 - app - ERROR - OAuth error: invalid_request
+2025-07-26 16:24:15,739 - app - ERROR - OAuth error: invalid_request
+2025-07-26 16:24:28,337 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=2807d502-5746-4a1d-ac0b-cdb...
+2025-07-26 16:24:34,190 - app - ERROR - OAuth error: invalid_request
+2025-07-26 16:27:52,870 - app - ERROR - OAuth error: invalid_request - AADSTS50194: Application '2807d502-5746-4a1d-ac0b-cdbdc1521205'(ai emailer) is not configured as a multi-tenant application. Usage of the /common endpoint is not supported for such applications created after '10/15/2018'. Use a tenant-specific endpoint or configure the application to be multi-tenant. Trace ID: 7dbe7077-c68d-430b-b636-e4ad534a5200 Correlation ID: 91408b67-6de2-45a6-81eb-7da3042bf9b9 Timestamp: 2025-07-26 06:27:52Z
+2025-07-26 16:30:26,959 - app - ERROR - OAuth error: invalid_request - AADSTS50194: Application '2807d502-5746-4a1d-ac0b-cdbdc1521205'(ai emailer) is not configured as a multi-tenant application. Usage of the /common endpoint is not supported for such applications created after '10/15/2018'. Use a tenant-specific endpoint or configure the application to be multi-tenant. Trace ID: 03e19dd6-217a-4e8c-9730-df2bdca74700 Correlation ID: 9c13cca5-e35f-4c89-86a0-9effcf4959da Timestamp: 2025-07-26 06:30:26Z
+2025-07-26 16:32:02,922 - app - ERROR - State mismatch: expected ad15bbac-1099-4d73-bd57-8fe35008219e, got fa8349ae-8df4-4f6c-9604-ee0db5e3e98f
+2025-07-26 16:32:14,350 - app - ERROR - State mismatch: expected ad15bbac-1099-4d73-bd57-8fe35008219e, got fa8349ae-8df4-4f6c-9604-ee0db5e3e98f
+2025-07-26 16:32:42,954 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:32:53,004 - app - ERROR - Token exchange failed: 401 - {"error":"invalid_client","error_description":"AADSTS7000215: Invalid client secret provided. Ensure the secret being sent in the request is the client secret value, not the client secret ID, for a secret added to app '2807d502-5746-4a1d-ac0b-cdbdc1521205'. Trace ID: 3614f8de-f145-4ad9-9970-5ad07cd45600 Correlation ID: 4cab7c88-151f-4c14-a383-3d01e2006bb7 Timestamp: 2025-07-26 06:32:53Z","error_codes":[7000215],"timestamp":"2025-07-26 06:32:53Z","trace_id":"3614f8de-f145-4ad9-9970-5ad07cd45600","correlation_id":"4cab7c88-151f-4c14-a383-3d01e2006bb7","error_uri":"https://login.microsoftonline.com/error?code=7000215"}
+2025-07-26 16:32:53,014 - app - ERROR - Demo user creation error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:32:53,014 - app - ERROR - Callback error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:38:06,586 - app - INFO - Callback received - State: 325cdd8d-598e-40cf-876d-52581067de31, Code: Yes
+2025-07-26 16:38:06,587 - app - INFO - State verification - Expected: 325cdd8d-598e-40cf-876d-52581067de31, Received: 325cdd8d-598e-40cf-876d-52581067de31
+2025-07-26 16:38:06,859 - app - INFO - Successfully exchanged code for tokens (public client)
+2025-07-26 16:38:07,014 - app - INFO - Retrieved user info: StephenDavies@peoplesainetwork.com
+2025-07-26 16:38:07,015 - app - INFO - Successfully authenticated with public client flow
+2025-07-26 16:38:07,017 - app - INFO - Database directory is writable
+2025-07-26 16:38:07,018 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:07,020 - app - ERROR - User creation/update error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:07,021 - app - ERROR - User creation failed: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:07,023 - app - INFO - Database directory is writable
+2025-07-26 16:38:07,024 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:07,025 - app - ERROR - Demo user creation error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:07,026 - app - INFO - Authentication successful: demo@aiemailassistant.local
+2025-07-26 16:38:07,073 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:38:07,389 - app - INFO - Generated new OAuth state: fb1942e2-ee8a-481a-b6ee-5c7dd28ceaa8
+2025-07-26 16:38:07,390 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:38:10,621 - app - INFO - Callback received - State: fb1942e2-ee8a-481a-b6ee-5c7dd28ceaa8, Code: Yes
+2025-07-26 16:38:10,622 - app - INFO - State verification - Expected: fb1942e2-ee8a-481a-b6ee-5c7dd28ceaa8, Received: fb1942e2-ee8a-481a-b6ee-5c7dd28ceaa8
+2025-07-26 16:38:10,837 - app - INFO - Successfully exchanged code for tokens (public client)
+2025-07-26 16:38:10,947 - app - INFO - Retrieved user info: StephenDavies@peoplesainetwork.com
+2025-07-26 16:38:10,948 - app - INFO - Successfully authenticated with public client flow
+2025-07-26 16:38:10,950 - app - INFO - Database directory is writable
+2025-07-26 16:38:10,952 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:10,953 - app - ERROR - User creation/update error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:10,954 - app - ERROR - User creation failed: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:10,956 - app - INFO - Database directory is writable
+2025-07-26 16:38:10,957 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:10,958 - app - ERROR - Demo user creation error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:10,959 - app - INFO - Authentication successful: demo@aiemailassistant.local
+2025-07-26 16:38:11,293 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:38:11,556 - app - INFO - Generated new OAuth state: 3558bec5-b2eb-483e-a812-c7b600743cf5
+2025-07-26 16:38:11,556 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:38:20,151 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:38:20,471 - app - INFO - Generated new OAuth state: 5c99d61a-4fae-4b20-ac11-4f2d9147d714
+2025-07-26 16:38:20,471 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:38:25,220 - app - INFO - Callback received - State: 5c99d61a-4fae-4b20-ac11-4f2d9147d714, Code: Yes
+2025-07-26 16:38:25,223 - app - INFO - State verification - Expected: 5c99d61a-4fae-4b20-ac11-4f2d9147d714, Received: 5c99d61a-4fae-4b20-ac11-4f2d9147d714
+2025-07-26 16:38:25,466 - app - INFO - Successfully exchanged code for tokens (public client)
+2025-07-26 16:38:25,579 - app - INFO - Retrieved user info: StephenDavies@peoplesainetwork.com
+2025-07-26 16:38:25,580 - app - INFO - Successfully authenticated with public client flow
+2025-07-26 16:38:25,582 - app - INFO - Database directory is writable
+2025-07-26 16:38:25,583 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:25,583 - app - ERROR - User creation/update error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:25,584 - app - ERROR - User creation failed: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:25,586 - app - INFO - Database directory is writable
+2025-07-26 16:38:25,587 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:25,588 - app - ERROR - Demo user creation error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:25,589 - app - INFO - Authentication successful: demo@aiemailassistant.local
+2025-07-26 16:38:25,919 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:38:26,174 - app - INFO - Generated new OAuth state: d03e2f53-4000-4c9d-883f-c0fc22f3ea6f
+2025-07-26 16:38:26,175 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:38:28,967 - app - INFO - Callback received - State: d03e2f53-4000-4c9d-883f-c0fc22f3ea6f, Code: Yes
+2025-07-26 16:38:28,969 - app - INFO - State verification - Expected: d03e2f53-4000-4c9d-883f-c0fc22f3ea6f, Received: d03e2f53-4000-4c9d-883f-c0fc22f3ea6f
+2025-07-26 16:38:29,305 - app - INFO - Successfully exchanged code for tokens (public client)
+2025-07-26 16:38:29,421 - app - INFO - Retrieved user info: StephenDavies@peoplesainetwork.com
+2025-07-26 16:38:29,422 - app - INFO - Successfully authenticated with public client flow
+2025-07-26 16:38:29,424 - app - INFO - Database directory is writable
+2025-07-26 16:38:29,425 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:29,426 - app - ERROR - User creation/update error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:29,427 - app - ERROR - User creation failed: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:29,429 - app - INFO - Database directory is writable
+2025-07-26 16:38:29,432 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:29,433 - app - ERROR - Demo user creation error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:38:29,435 - app - INFO - Authentication successful: demo@aiemailassistant.local
+2025-07-26 16:38:29,773 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:38:30,019 - app - INFO - Generated new OAuth state: 48dd6774-3d97-40a4-8b0a-88957acf1c24
+2025-07-26 16:38:30,021 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:39:56,240 - app - INFO - Generated new OAuth state: 02c7384d-2531-4d05-8044-bd4d98401855
+2025-07-26 16:39:56,242 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:40:29,598 - app - INFO - Callback received - State: 02c7384d-2531-4d05-8044-bd4d98401855, Code: Yes
+2025-07-26 16:40:29,598 - app - INFO - State verification - Expected: 02c7384d-2531-4d05-8044-bd4d98401855, Received: 02c7384d-2531-4d05-8044-bd4d98401855
+2025-07-26 16:40:29,876 - app - INFO - Successfully exchanged code for tokens (public client)
+2025-07-26 16:40:30,053 - app - INFO - Retrieved user info: StephenDavies@peoplesainetwork.com
+2025-07-26 16:40:30,054 - app - INFO - Successfully authenticated with public client flow
+2025-07-26 16:40:30,056 - app - INFO - Database directory is writable
+2025-07-26 16:40:30,057 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:30,057 - app - ERROR - User creation/update error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:30,058 - app - ERROR - User creation failed: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:30,060 - app - INFO - Database directory is writable
+2025-07-26 16:40:30,061 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:30,062 - app - ERROR - Demo user creation error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:30,064 - app - INFO - Authentication successful: demo@aiemailassistant.local
+2025-07-26 16:40:30,123 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:40:30,136 - app - INFO - Generated new OAuth state: b06eb4c6-6d4c-4945-b125-2ed059796bec
+2025-07-26 16:40:30,138 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:40:38,293 - app - INFO - Callback received - State: b06eb4c6-6d4c-4945-b125-2ed059796bec, Code: Yes
+2025-07-26 16:40:38,294 - app - INFO - State verification - Expected: b06eb4c6-6d4c-4945-b125-2ed059796bec, Received: b06eb4c6-6d4c-4945-b125-2ed059796bec
+2025-07-26 16:40:38,614 - app - INFO - Successfully exchanged code for tokens (public client)
+2025-07-26 16:40:38,932 - app - INFO - Retrieved user info: StephenDavies@peoplesainetwork.com
+2025-07-26 16:40:38,935 - app - INFO - Successfully authenticated with public client flow
+2025-07-26 16:40:38,940 - app - INFO - Database directory is writable
+2025-07-26 16:40:38,942 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:38,944 - app - ERROR - User creation/update error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:38,947 - app - ERROR - User creation failed: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:38,951 - app - INFO - Database directory is writable
+2025-07-26 16:40:38,954 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:38,955 - app - ERROR - Demo user creation error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:40:38,956 - app - INFO - Authentication successful: demo@aiemailassistant.local
+2025-07-26 16:40:38,987 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:40:38,997 - app - INFO - Generated new OAuth state: e1a69ea8-810c-41c5-9f32-dfcddb7f3c14
+2025-07-26 16:40:38,999 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:42:52,428 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:42:52,628 - app - INFO - Generated new OAuth state: 6657b0ab-ea9c-4fa2-ae14-e155861e64bd
+2025-07-26 16:42:52,629 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...
+2025-07-26 16:42:59,008 - app - INFO - Callback received - State: 6657b0ab-ea9c-4fa2-ae14-e155861e64bd, Code: Yes
+2025-07-26 16:42:59,009 - app - INFO - State verification - Expected: 6657b0ab-ea9c-4fa2-ae14-e155861e64bd, Received: 6657b0ab-ea9c-4fa2-ae14-e155861e64bd
+2025-07-26 16:42:59,424 - app - INFO - Successfully exchanged code for tokens (public client)
+2025-07-26 16:42:59,558 - app - INFO - Retrieved user info: StephenDavies@peoplesainetwork.com
+2025-07-26 16:42:59,559 - app - INFO - Successfully authenticated with public client flow
+2025-07-26 16:42:59,561 - app - INFO - Database directory is writable
+2025-07-26 16:42:59,561 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:42:59,562 - app - ERROR - User creation/update error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:42:59,563 - app - ERROR - User creation failed: 'Engine' object has no attribute 'execute'
+2025-07-26 16:42:59,565 - app - INFO - Database directory is writable
+2025-07-26 16:42:59,566 - app - ERROR - Database connection error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:42:59,567 - app - ERROR - Demo user creation error: 'Engine' object has no attribute 'execute'
+2025-07-26 16:42:59,568 - app - INFO - Authentication successful: demo@aiemailassistant.local
+2025-07-26 16:42:59,593 - app - ERROR - Authentication check error: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-26 16:42:59,917 - app - INFO - Generated new OAuth state: f4c6e146-4f85-4e69-a32c-82aecdd12cdb
+2025-07-26 16:42:59,918 - app - INFO - Redirecting to OAuth: https://login.microsoftonline.com/6ceb32ee-6c77-4bae-b7fc-45f2b110fa5f/oauth2/v2.0/authorize?client_...

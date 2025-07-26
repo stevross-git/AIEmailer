@@ -1,0 +1,265 @@
+"""
+AI Email Assistant Flask Application - FIXED VERSION
+"""
+import os
+import logging
+from flask import Flask
+
+def create_app():
+    """Create and configure Flask application with FIXED Flask-Session"""
+    app = Flask(__name__)
+    
+    # Configuration
+    app.config.update({
+        'SECRET_KEY': os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production'),
+        'SQLALCHEMY_DATABASE_URI': os.environ.get('DATABASE_URL', 'sqlite:///instance/app.db'),
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'SQLALCHEMY_ENGINE_OPTIONS': {
+            'pool_recycle': 300,
+            'pool_pre_ping': True
+        },
+        'DEBUG': True,
+        
+        # FIXED SESSION CONFIGURATION
+        'SESSION_TYPE': 'filesystem',
+        'SESSION_PERMANENT': False,
+        'SESSION_USE_SIGNER': False,  # CRITICAL: Disable to prevent bytes encoding
+        'SESSION_KEY_PREFIX': 'ai_email_assistant_',  # Use underscore instead of colon
+        'SESSION_FILE_DIR': 'data/sessions',
+        'SESSION_FILE_THRESHOLD': 500,
+        'SESSION_FILE_MODE': 0o600,  # Secure file permissions
+        'SESSION_COOKIE_NAME': 'ai_email_session',
+        'SESSION_COOKIE_HTTPONLY': True,
+        'SESSION_COOKIE_SECURE': False,  # Set to True in production with HTTPS
+        'SESSION_COOKIE_SAMESITE': 'Lax',
+        
+        # Application specific settings
+        'AZURE_CLIENT_ID': os.environ.get('AZURE_CLIENT_ID', 'your-client-id'),
+        'AZURE_CLIENT_SECRET': os.environ.get('AZURE_CLIENT_SECRET', 'your-client-secret'),
+        'AZURE_TENANT_ID': os.environ.get('AZURE_TENANT_ID', 'your-tenant-id'),
+        'AZURE_REDIRECT_URI': os.environ.get('AZURE_REDIRECT_URI', 'http://localhost:5000/auth/callback'),
+        'GRAPH_API_ENDPOINT': 'https://graph.microsoft.com/v1.0',
+        'GRAPH_SCOPES': ['openid', 'profile', 'email', 'User.Read', 'Mail.Read', 'Mail.Send', 'Mail.ReadWrite'],
+        'OLLAMA_BASE_URL': os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434'),
+        'OLLAMA_MODEL': os.environ.get('OLLAMA_MODEL', 'deepseek-r1:7b'),
+        'MAX_EMAILS_PER_SYNC': 50,
+        'EMAIL_SYNC_BATCH_SIZE': 20,
+        'CHAT_MAX_HISTORY': 10,
+        'WTF_CSRF_ENABLED': True,
+        'WTF_CSRF_TIME_LIMIT': None,
+        'MAX_CONTENT_LENGTH': 16 * 1024 * 1024,  # 16MB max file size
+        'LOG_LEVEL': 'INFO',
+        'LOG_FILE': 'logs/app.log'
+    })
+    
+    # Create necessary directories with proper permissions
+    for directory in ['instance', 'logs', 'data', 'data/sessions']:
+        os.makedirs(directory, exist_ok=True)
+        print(f"✅ Created directory: {directory}")
+    
+    # Test directory permissions
+    try:
+        test_file = os.path.join('data/sessions', 'test_write.tmp')
+        with open(test_file, 'w') as f:
+            f.write('test')
+        os.remove(test_file)
+        print("✅ Session directory is writable")
+    except Exception as e:
+        print(f"⚠️ Session directory write test failed: {e}")
+        # Try to fix permissions
+        try:
+            import stat
+            os.chmod('data/sessions', stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+            print("✅ Fixed session directory permissions")
+        except Exception as perm_error:
+            print(f"❌ Could not fix permissions: {perm_error}")
+    
+    # Initialize database FIRST
+    from app.models import db
+    db.init_app(app)
+    print("✅ Database initialized")
+    
+    # Initialize SocketIO with proper session handling
+    socketio = None
+    try:
+        from flask_socketio import SocketIO
+        socketio = SocketIO(app, 
+                          cors_allowed_origins="*", 
+                          manage_session=False,  # CRITICAL: Let Flask-Session handle sessions
+                          async_mode='threading')
+        print("✅ SocketIO initialized")
+    except ImportError:
+        print("⚠️ SocketIO not available - continuing without it")
+        # Create dummy socketio for compatibility
+        class DummySocketIO:
+            def emit(self, *args, **kwargs):
+                pass
+            def on(self, *args, **kwargs):
+                pass
+            def run(self, app, **kwargs):
+                app.run(**kwargs)
+        socketio = DummySocketIO()
+    
+    # Store socketio in app for access
+    app.socketio = socketio
+    
+    # Initialize CORS
+    try:
+        from flask_cors import CORS
+        CORS(app, supports_credentials=True, origins=['http://localhost:5000', 'http://127.0.0.1:5000'])
+        print("✅ CORS initialized")
+    except ImportError:
+        print("⚠️ Flask-CORS not available")
+    
+    # CRITICAL FIX: Initialize Flask-Session with patches
+    try:
+        from flask_session import Session
+        
+        # SOLUTION 1: Custom session interface with string conversion
+        class FixedFilesystemSessionInterface:
+            """Fixed filesystem session interface that ensures string session IDs"""
+            
+            def __init__(self, original_interface):
+                self.original = original_interface
+            
+            def save_session(self, app, session, response):
+                """Save session with guaranteed string session ID"""
+                # Ensure session ID is always a string
+                if hasattr(session, 'sid'):
+                    if isinstance(session.sid, bytes):
+                        session.sid = session.sid.decode('utf-8')
+                    elif session.sid is None:
+                        import uuid
+                        session.sid = str(uuid.uuid4())
+                    elif not isinstance(session.sid, str):
+                        session.sid = str(session.sid)
+                
+                # Call original save_session
+                return self.original.save_session(app, session, response)
+            
+            def __getattr__(self, name):
+                """Delegate all other methods to original interface"""
+                return getattr(self.original, name)
+        
+        # Initialize Flask-Session
+        session_ext = Session()
+        session_ext.init_app(app)
+        
+        # Apply the fix
+        original_interface = app.session_interface
+        app.session_interface = FixedFilesystemSessionInterface(original_interface)
+        
+        print("✅ Flask-Session initialized with bytes/string fix")
+        
+    except ImportError:
+        print("⚠️ Flask-Session not available - using default Flask sessions")
+        # Fallback to built-in Flask sessions
+        from datetime import timedelta
+        app.permanent_session_lifetime = timedelta(hours=24)
+    
+    # Setup logging
+    setup_logging(app)
+    
+    # Create database tables within app context
+    with app.app_context():
+        try:
+            # Import models here to avoid circular imports
+            from app.models.user import User
+            from app.models.email import Email
+            
+            # Try to import chat model (may not exist yet)
+            try:
+                from app.models.chat import ChatMessage, ChatSession
+            except ImportError:
+                print("⚠️ Chat models not found - will create them")
+            
+            # Create all tables
+            db.create_all()
+            print("✅ Database tables created successfully")
+            
+        except Exception as e:
+            print(f"⚠️ Database setup warning: {e}")
+    
+    # Register blueprints with proper error handling
+    register_blueprints(app)
+    
+    # Error handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        return {"error": "Not found"}, 404
+    
+    @app.errorhandler(500)
+    def server_error(error):
+        return {"error": "Internal server error"}, 500
+    
+    @app.route('/health')
+    def health_check():
+        """Health check endpoint"""
+        return {"status": "healthy", "message": "AI Email Assistant is running"}
+    
+    @app.route('/session-test')
+    def session_test():
+        """Test endpoint to verify session functionality"""
+        from flask import session
+        session['test'] = 'Session working!'
+        return {"status": "success", "message": "Session test passed"}
+    
+    print("✅ Flask app created successfully")
+    return app
+
+def setup_logging(app):
+    """Configure application logging"""
+    log_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'))
+    log_file = app.config.get('LOG_FILE')
+    
+    # Create logs directory if it doesn't exist
+    if log_file:
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+    
+    # Configure logging format
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # File handler
+    if log_file:
+        try:
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setLevel(log_level)
+            file_handler.setFormatter(formatter)
+            app.logger.addHandler(file_handler)
+        except Exception as e:
+            print(f"⚠️ Could not setup file logging: {e}")
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(log_level)
+    console_handler.setFormatter(formatter)
+    app.logger.addHandler(console_handler)
+    
+    app.logger.setLevel(log_level)
+    print(f"✅ Logging configured (level: {log_level})")
+
+def register_blueprints(app):
+    """Register all blueprints with error handling"""
+    blueprints = [
+        ('app.routes.main', 'main_bp', None),
+        ('app.routes.auth', 'auth_bp', '/auth'),
+        ('app.routes.email', 'email_bp', '/api/email'),
+        ('app.routes.chat', 'chat_bp', '/api/chat')
+    ]
+    
+    for module_name, blueprint_name, url_prefix in blueprints:
+        try:
+            module = __import__(module_name, fromlist=[blueprint_name])
+            blueprint = getattr(module, blueprint_name)
+            if url_prefix:
+                app.register_blueprint(blueprint, url_prefix=url_prefix)
+            else:
+                app.register_blueprint(blueprint)
+            print(f"✅ {blueprint_name} registered")
+        except Exception as e:
+            print(f"⚠️ {blueprint_name} registration failed: {e}")
+
+# Export for module imports
+__all__ = ['create_app', 'db']
