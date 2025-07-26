@@ -1,329 +1,260 @@
 """
 Authentication routes for AI Email Assistant
 """
-from flask import Blueprint, request, session, redirect, url_for, flash, jsonify, current_app
-from app.models.user import User
-from app import db
-from datetime import datetime, timedelta
-import uuid
 import os
+import uuid
+import hashlib
+from datetime import datetime
+from flask import Blueprint, request, redirect, url_for, session, jsonify, current_app
+from app.models import db
+from app.models.user import User
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_bp = Blueprint('auth', __name__)
+
+@auth_bp.route('/microsoft')
+def microsoft_login():
+    """Microsoft OAuth login redirect (alias for /login)"""
+    return redirect(url_for('auth.login'))
 
 @auth_bp.route('/login')
 def login():
-    """Demo login - creates demo user session"""
+    """Initiate OAuth login with Microsoft"""
     try:
-        # Get or create demo user
-        demo_user = User.query.filter_by(azure_id='demo-user-123').first()
+        # For demo purposes, create a simple login flow
+        # In production, this would redirect to Microsoft OAuth
         
-        if not demo_user:
-            demo_user = User(
-                azure_id='demo-user-123',
-                email='demo@example.com',
-                display_name='Demo User',
-                given_name='Demo',
-                surname='User',
-                job_title='Developer',
-                office_location='Remote',
-                is_active=True,
-                created_at=datetime.utcnow(),
-                last_login=datetime.utcnow()
-            )
-            db.session.add(demo_user)
-            db.session.commit()
-        else:
-            demo_user.last_login = datetime.utcnow()
-            db.session.commit()
-        
-        # Set session
-        session['user_id'] = demo_user.id
-        session['user_email'] = demo_user.email
-        session['user_name'] = demo_user.display_name
-        session['authenticated'] = True
-        
-        current_app.logger.info(f"Demo user login, ID: {demo_user.id}")
-        flash('Signed in as Demo User', 'success')
-        
-        return redirect(url_for('main.dashboard'))
-        
-    except Exception as e:
-        current_app.logger.error(f"Demo login error: {e}")
-        flash('Login failed', 'error')
-        return redirect(url_for('main.index'))
-
-@auth_bp.route('/microsoft')
-def microsoft_auth():
-    """Redirect to Microsoft for authentication (Public Client Only)"""
-    try:
-        import msal
-        
-        # Get configuration from environment
-        client_id = os.getenv('AZURE_CLIENT_ID')
-        tenant_id = os.getenv('AZURE_TENANT_ID')
-        redirect_uri = os.getenv('AZURE_REDIRECT_URI', 'http://localhost:5000/auth/callback')
-        
-        if not client_id or not tenant_id:
-            current_app.logger.error("Microsoft authentication not configured")
-            flash('Microsoft authentication not configured. Please check your .env file.', 'error')
-            return redirect(url_for('main.index'))
-        
-        current_app.logger.info(f"Starting Microsoft auth for PUBLIC client: {client_id}")
-        
-        # ALWAYS use public client (no secret)
-        authority = f"https://login.microsoftonline.com/{tenant_id}"
-        msal_app = msal.PublicClientApplication(
-            client_id=client_id,
-            authority=authority
-        )
-        
-        current_app.logger.info("Created PUBLIC client application (no secret)")
-        
-        # Microsoft Graph scopes for email access
-        scopes = [
-            'https://graph.microsoft.com/Mail.Read',
-            'https://graph.microsoft.com/Mail.Send',
-            'https://graph.microsoft.com/User.Read'
-        ]
-        
-        # Generate auth URL
+        # Generate state parameter for CSRF protection
         state = str(uuid.uuid4())
-        auth_url = msal_app.get_authorization_request_url(
-            scopes=scopes,
-            redirect_uri=redirect_uri,
-            state=state
+        session['oauth_state'] = state
+        
+        # Microsoft OAuth parameters
+        client_id = current_app.config.get('AZURE_CLIENT_ID')
+        redirect_uri = current_app.config.get('AZURE_REDIRECT_URI')
+        scopes = ' '.join(current_app.config.get('GRAPH_SCOPES', []))
+        
+        # Microsoft OAuth URL
+        oauth_url = (
+            f"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?"
+            f"client_id={client_id}&"
+            f"response_type=code&"
+            f"redirect_uri={redirect_uri}&"
+            f"scope={scopes}&"
+            f"state={state}&"
+            f"response_mode=query&"
+            f"prompt=select_account"
         )
         
-        # Store app config in session for callback
-        session['msal_state'] = state
-        session['msal_config'] = {
-            'client_id': client_id,
-            'authority': authority,
-            'redirect_uri': redirect_uri,
-            'is_public_client': True  # Always true
-        }
+        current_app.logger.info(f"Redirecting to OAuth: {oauth_url[:100]}...")
+        return redirect(oauth_url)
         
-        current_app.logger.info(f"Redirecting to Microsoft auth: {auth_url[:100]}...")
-        return redirect(auth_url)
-        
-    except ImportError:
-        current_app.logger.error("MSAL library not installed")
-        flash('Microsoft authentication library not installed. Run: pip install msal', 'error')
-        return redirect(url_for('main.index'))
     except Exception as e:
-        current_app.logger.error(f"Microsoft auth error: {e}")
-        flash(f'Error setting up Microsoft authentication: {str(e)}', 'error')
-        return redirect(url_for('main.index'))
+        current_app.logger.error(f"Login error: {e}")
+        return jsonify({'error': 'Login failed', 'details': str(e)}), 500
 
 @auth_bp.route('/callback')
-def auth_callback():
-    """Handle Microsoft authentication callback (Public Client Only)"""
+def callback():
+    """Handle OAuth callback from Microsoft"""
     try:
-        import msal
-        from app.utils.auth_helpers import encrypt_token
-        
-        current_app.logger.info("Processing Microsoft auth callback for PUBLIC client")
-        
         # Get authorization code from callback
         code = request.args.get('code')
         state = request.args.get('state')
         error = request.args.get('error')
-        error_description = request.args.get('error_description')
         
+        # Check for OAuth errors
         if error:
-            current_app.logger.error(f"Microsoft auth error: {error} - {error_description}")
-            flash(f'Authentication failed: {error_description}', 'error')
-            return redirect(url_for('main.index'))
+            current_app.logger.error(f"OAuth error: {error}")
+            return jsonify({'error': 'OAuth failed', 'details': error}), 400
         
-        if not code:
+        # Verify state parameter
+        if not state or state != session.get('oauth_state'):
+            current_app.logger.error("Invalid OAuth state")
+            return jsonify({'error': 'Invalid state parameter'}), 400
+        
+        # Exchange code for tokens (simplified for demo)
+        if code:
+            # In production, exchange code for access token
+            # For demo, create/login user directly
+            
+            # Demo user creation/login
+            demo_user_email = "demo@example.com"
+            demo_user_name = "Demo User"
+            demo_azure_id = f"demo-{uuid.uuid4()}"
+            
+            user = User.find_by_email(demo_user_email)
+            if not user:
+                # Create new user
+                user = User(
+                    email=demo_user_email,
+                    display_name=demo_user_name,
+                    azure_id=demo_azure_id,
+                    azure_tenant_id="demo-tenant",
+                    is_active=True
+                )
+                db.session.add(user)
+                db.session.commit()
+                current_app.logger.info(f"Created new user: {demo_user_email}")
+            
+            # Update login timestamp
+            user.update_last_login()
+            
+            # Store user session
+            session['user_id'] = user.id
+            session['user_email'] = user.email
+            session['user_name'] = user.display_name
+            session.permanent = True
+            
+            current_app.logger.info(f"User logged in: {user.email}")
+            
+            # Clean up OAuth state
+            session.pop('oauth_state', None)
+            
+            # Redirect to dashboard
+            return redirect(url_for('main.dashboard'))
+        
+        else:
             current_app.logger.error("No authorization code received")
-            flash('No authorization code received', 'error')
+            return jsonify({'error': 'No authorization code'}), 400
+            
+    except Exception as e:
+        current_app.logger.error(f"Callback error: {e}")
+        return jsonify({'error': 'Callback failed', 'details': str(e)}), 500
+
+@auth_bp.route('/logout', methods=['POST', 'GET'])
+def logout():
+    """Log out current user"""
+    try:
+        user_email = session.get('user_email', 'Unknown')
+        
+        # Clear session
+        session.clear()
+        
+        current_app.logger.info(f"User logged out: {user_email}")
+        
+        if request.method == 'POST':
+            return jsonify({'success': True, 'message': 'Logged out successfully'})
+        else:
             return redirect(url_for('main.index'))
-        
-        # Verify state
-        expected_state = session.get('msal_state')
-        if state != expected_state:
-            current_app.logger.error(f"State mismatch: expected {expected_state}, got {state}")
-            flash('Authentication state mismatch', 'error')
+            
+    except Exception as e:
+        current_app.logger.error(f"Logout error: {e}")
+        if request.method == 'POST':
+            return jsonify({'error': 'Logout failed', 'details': str(e)}), 500
+        else:
             return redirect(url_for('main.index'))
+
+@auth_bp.route('/status')
+def status():
+    """Get authentication status"""
+    try:
+        if 'user_id' in session:
+            user = User.query.get(session['user_id'])
+            if user and user.is_active:
+                return jsonify({
+                    'authenticated': True,
+                    'user': {
+                        'id': user.id,
+                        'email': user.email,
+                        'display_name': user.display_name,
+                        'last_login': user.last_login.isoformat() if user.last_login else None,
+                        'last_email_sync': user.last_email_sync.isoformat() if user.last_email_sync else None
+                    }
+                })
         
-        # Get MSAL config from session
-        msal_config = session.get('msal_config')
-        if not msal_config:
-            current_app.logger.error("MSAL config not found in session")
-            flash('Authentication session expired', 'error')
-            return redirect(url_for('main.index'))
+        return jsonify({'authenticated': False})
         
-        # ALWAYS use public client
-        current_app.logger.info("Using PUBLIC client for token exchange (no secret)")
-        msal_app = msal.PublicClientApplication(
-            client_id=msal_config['client_id'],
-            authority=msal_config['authority']
-        )
+    except Exception as e:
+        current_app.logger.error(f"Status check error: {e}")
+        return jsonify({'authenticated': False, 'error': str(e)})
+
+@auth_bp.route('/demo-login', methods=['POST'])
+def demo_login():
+    """Demo login for testing purposes"""
+    try:
+        # Create or get demo user
+        demo_email = "demo@aiemailassistant.local"
+        demo_name = "Demo User"
         
-        # Exchange code for token
-        scopes = [
-            'https://graph.microsoft.com/Mail.Read',
-            'https://graph.microsoft.com/Mail.Send',
-            'https://graph.microsoft.com/User.Read'
-        ]
-        
-        current_app.logger.info("Exchanging code for token (PUBLIC client)")
-        token_result = msal_app.acquire_token_by_authorization_code(
-            code=code,
-            scopes=scopes,
-            redirect_uri=msal_config['redirect_uri']
-        )
-        
-        if 'error' in token_result:
-            current_app.logger.error(f"Token acquisition error: {token_result}")
-            flash(f"Failed to get access token: {token_result.get('error_description', 'Unknown error')}", 'error')
-            return redirect(url_for('main.index'))
-        
-        current_app.logger.info("✅ Token acquisition successful with PUBLIC client!")
-        
-        # Get user information from Microsoft Graph
-        access_token = token_result['access_token']
-        current_app.logger.info("Getting user info from Microsoft Graph")
-        
-        import requests
-        headers = {'Authorization': f'Bearer {access_token}'}
-        user_response = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers, timeout=30)
-        
-        if user_response.status_code != 200:
-            current_app.logger.error(f"Failed to get user info: {user_response.status_code}")
-            flash('Failed to get user information from Microsoft', 'error')
-            return redirect(url_for('main.index'))
-        
-        user_data = user_response.json()
-        current_app.logger.info(f"✅ Got user info for: {user_data.get('userPrincipalName')}")
-        
-        # Create or update user in database
-        user = User.query.filter_by(azure_id=user_data['id']).first()
-        
+        user = User.find_by_email(demo_email)
         if not user:
-            current_app.logger.info(f"Creating new REAL user: {user_data.get('userPrincipalName')}")
             user = User(
-                azure_id=user_data['id'],
-                email=user_data.get('mail') or user_data.get('userPrincipalName'),
-                display_name=user_data.get('displayName', ''),
-                given_name=user_data.get('givenName', ''),
-                surname=user_data.get('surname', ''),
-                job_title=user_data.get('jobTitle', ''),
-                office_location=user_data.get('officeLocation', ''),
-                is_active=True,
-                created_at=datetime.utcnow()
+                email=demo_email,
+                display_name=demo_name,
+                azure_id=f"demo-{uuid.uuid4()}",
+                azure_tenant_id="demo-tenant",
+                is_active=True
             )
             db.session.add(user)
-        else:
-            current_app.logger.info(f"Updating existing real user: {user.email}")
-            user.email = user_data.get('mail') or user_data.get('userPrincipalName')
-            user.display_name = user_data.get('displayName', '')
-            user.is_active = True
+            db.session.commit()
+            current_app.logger.info(f"Created demo user: {demo_email}")
         
-        # Store encrypted tokens
-        try:
-            user.access_token_hash = encrypt_token(token_result['access_token'])
-            current_app.logger.info("✅ Stored encrypted access token")
-            
-            # Public clients might not get refresh tokens
-            if 'refresh_token' in token_result:
-                user.refresh_token_hash = encrypt_token(token_result['refresh_token'])
-                current_app.logger.info("✅ Stored refresh token")
-            else:
-                current_app.logger.info("ℹ️ No refresh token (normal for public clients)")
-            
-            # Set token expiration
-            expires_in = token_result.get('expires_in', 3600)
-            user.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
-            user.last_login = datetime.utcnow()
-            
-        except Exception as token_error:
-            current_app.logger.warning(f"Could not encrypt tokens: {token_error}")
-            user.last_login = datetime.utcnow()
+        # Update login timestamp
+        user.update_last_login()
         
-        db.session.commit()
-        
-        # Set session
+        # Store user session
         session['user_id'] = user.id
         session['user_email'] = user.email
         session['user_name'] = user.display_name
-        session['authenticated'] = True
+        session.permanent = True
         
-        # Clear MSAL session data
-        session.pop('msal_state', None)
-        session.pop('msal_config', None)
-        
-        current_app.logger.info(f"🎉 REAL Microsoft user authenticated: {user.display_name} (ID: {user.id})")
-        flash(f'Successfully signed in as {user.display_name} - Ready for real email sync!', 'success')
-        
-        return redirect(url_for('main.dashboard'))
-        
-    except Exception as e:
-        current_app.logger.error(f"Auth callback error: {e}")
-        import traceback
-        traceback.print_exc()
-        flash('Authentication failed - please try again', 'error')
-        return redirect(url_for('main.index'))
-
-@auth_bp.route('/logout')
-def logout():
-    """Logout user and clear session"""
-    try:
-        user_email = session.get('user_email', 'Unknown')
-        session.clear()
-        current_app.logger.info(f"User {user_email} logged out")
-        flash('Successfully logged out', 'success')
-        return redirect(url_for('main.index'))
-    except Exception as e:
-        current_app.logger.error(f"Logout error: {e}")
-        session.clear()
-        return redirect(url_for('main.index'))
-
-@auth_bp.route('/status')
-def auth_status():
-    """Get authentication status"""
-    try:
-        user_id = session.get('user_id')
-        
-        if not user_id:
-            return jsonify({
-                'authenticated': False,
-                'user': None,
-                'message': 'Please sign in'
-            })
-        
-        user = User.query.get(user_id)
-        
-        if not user:
-            session.clear()
-            return jsonify({
-                'authenticated': False,
-                'user': None,
-                'message': 'User not found - please sign in again'
-            })
-        
-        # Check if this is a real Microsoft user
-        is_real_user = user.azure_id and user.azure_id != 'demo-user-123'
-        has_tokens = user.access_token_hash is not None
+        current_app.logger.info(f"Demo login successful: {user.email}")
         
         return jsonify({
-            'authenticated': True,
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'display_name': user.display_name,
-                'azure_id': user.azure_id,
-                'is_real_user': is_real_user,
-                'has_tokens': has_tokens,
-                'last_sync': user.last_sync.isoformat() if user.last_sync else None
-            },
-            'message': f'Signed in as {user.email}' + (' (Microsoft 365)' if is_real_user else ' (Demo)')
+            'success': True,
+            'message': 'Demo login successful',
+            'user': user.to_dict()
         })
         
     except Exception as e:
-        current_app.logger.error(f"Auth status error: {e}")
+        current_app.logger.error(f"Demo login error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@auth_bp.route('/user')
+def get_user():
+    """Get current user information"""
+    try:
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        user = User.query.get(session['user_id'])
+        if not user or not user.is_active:
+            session.clear()
+            return jsonify({'error': 'User not found'}), 404
+        
         return jsonify({
-            'authenticated': False,
-            'error': str(e)
-        }), 500
+            'user': user.to_dict(),
+            'stats': {
+                'total_emails': user.get_email_count(),
+                'unread_emails': user.get_unread_email_count()
+            }
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Get user error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Token management functions
+def hash_token(token):
+    """Hash a token for secure storage"""
+    if not token:
+        return None
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
+def store_user_tokens(user, access_token, refresh_token=None, expires_in=None):
+    """Store user tokens securely"""
+    try:
+        # Hash tokens before storing
+        user.access_token_hash = hash_token(access_token)
+        if refresh_token:
+            user.refresh_token_hash = hash_token(refresh_token)
+        
+        # Calculate expiration time
+        if expires_in:
+            from datetime import timedelta
+            user.token_expires_at = datetime.utcnow() + timedelta(seconds=int(expires_in))
+        
+        db.session.commit()
+        current_app.logger.info(f"Stored tokens for user: {user.email}")
+        
+    except Exception as e:
+        current_app.logger.error(f"Token storage error: {e}")
+        raise

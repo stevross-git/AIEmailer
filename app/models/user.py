@@ -1,130 +1,90 @@
 """
-User Model for AI Email Assistant
+User model for AI Email Assistant
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON
-from app import db
+from app.models import db
 
 class User(db.Model):
-    """User model for storing authenticated user information"""
-    
     __tablename__ = 'users'
     
-    id = Column(Integer, primary_key=True)
-    azure_id = Column(String(255), unique=True, nullable=False, index=True)
-    email = Column(String(255), unique=True, nullable=False, index=True)
-    display_name = Column(String(255), nullable=False)
-    given_name = Column(String(255))
-    surname = Column(String(255))
-    job_title = Column(String(255))
-    office_location = Column(String(255))
-    preferred_language = Column(String(10))
+    # Primary key
+    id = db.Column(db.Integer, primary_key=True)
     
-    # Authentication tokens (encrypted)
-    access_token_hash = Column(Text)  # Encrypted access token
-    refresh_token_hash = Column(Text)  # Encrypted refresh token
-    token_expires_at = Column(DateTime)
+    # User information
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    display_name = db.Column(db.String(100), nullable=True)
+    
+    # Azure/Microsoft Graph information
+    azure_id = db.Column(db.String(100), unique=True, nullable=True, index=True)
+    azure_tenant_id = db.Column(db.String(100), nullable=True)
+    
+    # Authentication tokens (hashed)
+    access_token_hash = db.Column(db.Text, nullable=True)
+    refresh_token_hash = db.Column(db.Text, nullable=True)
+    token_expires_at = db.Column(db.DateTime, nullable=True)
     
     # User preferences
-    preferences = Column(JSON, default=dict)
-    timezone = Column(String(50), default='UTC')
+    preferences = db.Column(db.JSON, default=dict)
+    timezone = db.Column(db.String(50), default='UTC')
     
-    # Account status
-    is_active = Column(Boolean, default=True)
-    is_admin = Column(Boolean, default=False)
-    last_login = Column(DateTime)
-    last_sync = Column(DateTime)
+    # Status and metadata
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    last_login = db.Column(db.DateTime, nullable=True)
+    last_email_sync = db.Column(db.DateTime, nullable=True)
+    email_sync_cursor = db.Column(db.String(255), nullable=True)
     
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relationships
-    emails = db.relationship('Email', backref='user', lazy='dynamic', cascade='all, delete-orphan')
-    chat_messages = db.relationship('ChatMessage', backref='user', lazy='dynamic', cascade='all, delete-orphan')
-    
-    def __init__(self, azure_id, email, display_name, **kwargs):
-        self.azure_id = azure_id
-        self.email = email
-        self.display_name = display_name
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+    def __repr__(self):
+        return f'<User {self.email}>'
     
     def to_dict(self):
-        """Convert user object to dictionary"""
+        """Convert user to dictionary"""
         return {
             'id': self.id,
-            'azure_id': self.azure_id,
             'email': self.email,
             'display_name': self.display_name,
-            'given_name': self.given_name,
-            'surname': self.surname,
-            'job_title': self.job_title,
-            'office_location': self.office_location,
-            'preferred_language': self.preferred_language,
-            'preferences': self.preferences or {},
-            'timezone': self.timezone,
+            'azure_id': self.azure_id,
             'is_active': self.is_active,
-            'is_admin': self.is_admin,
             'last_login': self.last_login.isoformat() if self.last_login else None,
-            'last_sync': self.last_sync.isoformat() if self.last_sync else None,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'last_email_sync': self.last_email_sync.isoformat() if self.last_email_sync else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'preferences': self.preferences or {},
+            'timezone': self.timezone
         }
     
-    def update_login_time(self):
+    @classmethod
+    def find_by_email(cls, email):
+        """Find user by email address"""
+        return cls.query.filter_by(email=email).first()
+    
+    @classmethod
+    def find_by_azure_id(cls, azure_id):
+        """Find user by Azure ID"""
+        return cls.query.filter_by(azure_id=azure_id).first()
+    
+    def update_last_login(self):
         """Update last login timestamp"""
         self.last_login = datetime.utcnow()
         db.session.commit()
     
-    def update_sync_time(self):
-        """Update last sync timestamp"""
-        self.last_sync = datetime.utcnow()
+    def update_sync_info(self, cursor=None):
+        """Update email sync information"""
+        self.last_email_sync = datetime.utcnow()
+        if cursor:
+            self.email_sync_cursor = cursor
         db.session.commit()
-    
-    def update_preferences(self, preferences):
-        """Update user preferences"""
-        if self.preferences is None:
-            self.preferences = {}
-        self.preferences.update(preferences)
-        self.updated_at = datetime.utcnow()
-        db.session.commit()
-    
-    def get_preference(self, key, default=None):
-        """Get a specific preference value"""
-        if self.preferences is None:
-            return default
-        return self.preferences.get(key, default)
-    
-    def has_valid_token(self):
-        """Check if user has a valid access token"""
-        if not self.access_token_hash or not self.token_expires_at:
-            return False
-        return datetime.utcnow() < self.token_expires_at
     
     def get_email_count(self):
-        """Get total number of emails for this user"""
-        return self.emails.count()
+        """Get count of user's emails"""
+        # Import here to avoid circular imports
+        from app.models.email import Email
+        return Email.query.filter_by(user_id=self.id).count()
     
-    def get_recent_emails(self, limit=10):
-        """Get recent emails for this user"""
-        return self.emails.order_by(db.desc('received_date')).limit(limit).all()
-    
-    @staticmethod
-    def find_by_azure_id(azure_id):
-        """Find user by Azure ID"""
-        return User.query.filter_by(azure_id=azure_id).first()
-    
-    @staticmethod
-    def find_by_email(email):
-        """Find user by email address"""
-        return User.query.filter_by(email=email).first()
-    
-    @staticmethod
-    def get_active_users():
-        """Get all active users"""
-        return User.query.filter_by(is_active=True).all()
-    
-    def __repr__(self):
-        return f'<User {self.email}>'
+    def get_unread_email_count(self):
+        """Get count of user's unread emails"""
+        # Import here to avoid circular imports
+        from app.models.email import Email
+        return Email.query.filter_by(user_id=self.id, is_read=False).count()
